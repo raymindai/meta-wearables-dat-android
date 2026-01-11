@@ -6,9 +6,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-// VisionAnalyzer - OpenAI GPT-4o Vision API Integration
+// VisionAnalyzer - Google Gemini Vision API Integration
 //
-// This class analyzes images using OpenAI's GPT-4o Vision API to identify
+// This class analyzes images using Google's Gemini API to identify
 // landmarks, scenes, and provide descriptive guides in Korean.
 
 package com.meta.wearable.dat.externalsampleapps.landmarkguide.ai
@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit
 class VisionAnalyzer {
     companion object {
         private const val TAG = "VisionAnalyzer"
-        private const val OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
+        private const val GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
     }
 
     private val client = OkHttpClient.Builder()
@@ -42,24 +42,27 @@ class VisionAnalyzer {
     private val gson = Gson()
 
     /**
-     * Analyzes a scene from the given bitmap and returns a Korean description
+     * Analyzes a scene from the given bitmap and returns a description
      */
-    suspend fun analyzeScene(bitmap: Bitmap, locationHint: String? = null): Result<String> {
+    suspend fun analyzeScene(
+        bitmap: Bitmap, 
+        locationHint: String? = null,
+        mode: GuideMode = GuideMode.TOUR
+    ): Result<String> {
         return withContext(Dispatchers.IO) {
             try {
-                val apiKey = BuildConfig.OPENAI_API_KEY
+                val apiKey = BuildConfig.GEMINI_API_KEY
                 if (apiKey.isBlank()) {
-                    return@withContext Result.failure(Exception("OpenAI API key not configured"))
+                    return@withContext Result.failure(Exception("Gemini API key not configured"))
                 }
 
                 val base64Image = bitmapToBase64(bitmap)
-                val prompt = buildPrompt(locationHint)
+                val prompt = buildPrompt(locationHint, mode)
 
                 val requestBody = buildRequestBody(base64Image, prompt)
 
                 val request = Request.Builder()
-                    .url(OPENAI_API_URL)
-                    .addHeader("Authorization", "Bearer $apiKey")
+                    .url("$GEMINI_API_URL?key=$apiKey")
                     .addHeader("Content-Type", "application/json")
                     .post(requestBody.toRequestBody("application/json".toMediaType()))
                     .build()
@@ -67,7 +70,8 @@ class VisionAnalyzer {
                 val response = client.newCall(request).execute()
                 
                 if (!response.isSuccessful) {
-                    Log.e(TAG, "API call failed: ${response.code} - ${response.message}")
+                    val errorBody = response.body?.string()
+                    Log.e(TAG, "API call failed: ${response.code} - ${response.message} - $errorBody")
                     return@withContext Result.failure(Exception("API call failed: ${response.code}"))
                 }
 
@@ -76,8 +80,11 @@ class VisionAnalyzer {
                     return@withContext Result.failure(Exception("Empty response"))
                 }
 
-                val chatResponse = gson.fromJson(responseBody, ChatCompletionResponse::class.java)
-                val content = chatResponse.choices?.firstOrNull()?.message?.content
+                Log.d(TAG, "Raw response: $responseBody")
+
+                val geminiResponse = gson.fromJson(responseBody, GeminiResponse::class.java)
+                val content = geminiResponse.candidates?.firstOrNull()
+                    ?.content?.parts?.firstOrNull()?.text
                 
                 if (content.isNullOrBlank()) {
                     return@withContext Result.failure(Exception("No content in response"))
@@ -111,76 +118,131 @@ class VisionAnalyzer {
         return Base64.encodeToString(outputStream.toByteArray(), Base64.NO_WRAP)
     }
 
-    private fun buildPrompt(locationHint: String?): String {
+    /**
+     * Guide mode enum for different AI behaviors
+     */
+    enum class GuideMode {
+        TOUR,      // Saudi Arabia landmarks and historic sites
+        GENERAL,   // Describe everything visible
+        TRANSLATE  // Translate Arabic text to English
+    }
+
+    private fun buildPrompt(locationHint: String?, mode: GuideMode = GuideMode.TOUR): String {
         val locationInfo = if (locationHint != null) {
-            "\n현재 위치: $locationHint"
+            "\nCurrent location: $locationHint"
         } else {
             ""
         }
 
-        return """당신은 전문 여행 가이드입니다.$locationInfo
+        return when (mode) {
+            GuideMode.TOUR -> """You are an expert tour guide specializing in Saudi Arabia.$locationInfo
 
-사용자가 스마트 안경을 통해 보고 있는 장면을 분석하세요.
-만약 유적지, 랜드마크, 건물, 또는 흥미로운 장소가 보인다면:
-1. 그것이 무엇인지 간단히 설명하세요
-2. 역사적 배경이나 흥미로운 사실을 한두 가지 알려주세요
+Analyze the scene the user is viewing through smart glasses.
+Focus on identifying Saudi Arabian landmarks, historic sites, mosques, cultural locations, or interesting places.
 
-중요한 규칙:
-- 한국어로 답변하세요
-- 2-3문장으로 간결하게 답변하세요 (TTS로 읽힐 예정)
-- 일반적인 거리나 자연 풍경만 보인다면 "특별한 랜드마크가 보이지 않습니다"라고 답변하세요
-- 확실하지 않은 정보는 추측이라고 말하세요"""
+If you recognize a landmark:
+1. Name it and briefly explain its significance
+2. Share an interesting historical or cultural fact
+
+Important rules:
+- Respond in English
+- Keep response to 2-3 sentences (TTS output)
+- If no notable Saudi landmarks visible, say "No notable landmarks visible."
+- If uncertain, mention it's your best guess"""
+
+            GuideMode.GENERAL -> """You are a visual assistant helping describe the world.$locationInfo
+
+Describe what you see in the image:
+- People, objects, signs, text
+- Colors, actions, spatial layout
+- Anything notable or interesting
+
+Important rules:
+- Respond in English
+- Keep response to 2-3 sentences (TTS output)
+- Be descriptive but concise
+- Describe the most important elements first"""
+
+            GuideMode.TRANSLATE -> """You are a translator specializing in Arabic to English translation.
+
+Look at the image and find any Arabic text (signs, menus, documents, labels, etc.).
+
+Your task:
+1. Identify all Arabic text visible in the image
+2. Translate each piece of text to English
+3. Provide context if helpful (e.g., "The sign says..." or "The menu reads...")
+
+Important rules:
+- Respond in English only
+- Keep response to 2-3 sentences (TTS output)
+- If no Arabic text is visible, say "No Arabic text detected."
+- Read translations naturally for TTS
+- If text is partially visible or unclear, mention that"""
+        }
     }
 
     private fun buildRequestBody(base64Image: String, prompt: String): String {
-        val request = ChatCompletionRequest(
-            model = "gpt-4o",
-            messages = listOf(
-                Message(
-                    role = "user",
-                    content = listOf(
-                        ContentPart(type = "text", text = prompt),
-                        ContentPart(
-                            type = "image_url",
-                            imageUrl = ImageUrl(url = "data:image/jpeg;base64,$base64Image")
+        val request = GeminiRequest(
+            contents = listOf(
+                GeminiContent(
+                    parts = listOf(
+                        GeminiPart(text = prompt),
+                        GeminiPart(
+                            inlineData = InlineData(
+                                mimeType = "image/jpeg",
+                                data = base64Image
+                            )
                         )
                     )
                 )
             ),
-            maxTokens = 300
+            generationConfig = GenerationConfig(
+                maxOutputTokens = 500,
+                temperature = 0.4f
+            )
         )
         return gson.toJson(request)
     }
 }
 
-// Request/Response data classes
-data class ChatCompletionRequest(
-    val model: String,
-    val messages: List<Message>,
-    @SerializedName("max_tokens") val maxTokens: Int
+// Gemini Request data classes
+data class GeminiRequest(
+    val contents: List<GeminiContent>,
+    val generationConfig: GenerationConfig? = null
 )
 
-data class Message(
-    val role: String,
-    val content: List<ContentPart>
+data class GeminiContent(
+    val parts: List<GeminiPart>
 )
 
-data class ContentPart(
-    val type: String,
+data class GeminiPart(
     val text: String? = null,
-    @SerializedName("image_url") val imageUrl: ImageUrl? = null
+    @SerializedName("inline_data") val inlineData: InlineData? = null
 )
 
-data class ImageUrl(val url: String)
-
-data class ChatCompletionResponse(
-    val choices: List<Choice>?
+data class InlineData(
+    @SerializedName("mime_type") val mimeType: String,
+    val data: String
 )
 
-data class Choice(
-    val message: ResponseMessage?
+data class GenerationConfig(
+    @SerializedName("max_output_tokens") val maxOutputTokens: Int,
+    val temperature: Float
 )
 
-data class ResponseMessage(
-    val content: String?
+// Gemini Response data classes
+data class GeminiResponse(
+    val candidates: List<GeminiCandidate>?
+)
+
+data class GeminiCandidate(
+    val content: GeminiContentResponse?
+)
+
+data class GeminiContentResponse(
+    val parts: List<GeminiPartResponse>?
+)
+
+data class GeminiPartResponse(
+    val text: String?
 )

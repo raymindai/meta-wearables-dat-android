@@ -100,6 +100,17 @@ class StreamViewModel(
             }
           }
         }
+    
+    // Monitor device connection - stop streaming if device disconnects (e.g., glasses in case)
+    viewModelScope.launch {
+      wearablesViewModel.uiState.collect { wearablesState ->
+        if (!wearablesState.hasActiveDevice && streamSession != null) {
+          Log.d(TAG, "Device disconnected - stopping stream to save battery")
+          stopStream()
+          wearablesViewModel.navigateToDeviceSelection()
+        }
+      }
+    }
   }
 
   fun startStream() {

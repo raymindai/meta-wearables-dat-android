@@ -37,10 +37,10 @@ class VoiceGuidePlayer(context: Context) {
     init {
         tts = TextToSpeech(context) { status ->
             if (status == TextToSpeech.SUCCESS) {
-                // Set Korean language
-                val result = tts?.setLanguage(Locale.KOREAN)
+                // Set English language
+                val result = tts?.setLanguage(Locale.US)
                 if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                    Log.w(TAG, "Korean not supported, falling back to default")
+                    Log.w(TAG, "English US not supported, falling back to default")
                     tts?.setLanguage(Locale.getDefault())
                 }
                 

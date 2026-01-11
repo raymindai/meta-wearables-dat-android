@@ -9,7 +9,7 @@
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
-        android:label="CameraAccess"
+        android:label="Humain Eyes"
         android:supportsRtl="true"
         android:theme="@style/Theme.CameraAccess">
 
@@ -17,6 +17,12 @@
         <meta-data
             android:name="com.meta.wearable.mwdat.APPLICATION_ID"
             android:value="0"
+            />
+
+        <!-- Google Maps API Key -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}"
             />
 
         <activity

@@ -14,12 +14,21 @@ plugins {
   alias(libs.plugins.compose.compiler)
 }
 
-// Load OpenAI API key from local.properties
+// Load Gemini API key from local.properties
 val localPropertiesFile = rootProject.file("local.properties")
-val openaiApiKey: String = if (localPropertiesFile.exists()) {
+val geminiApiKey: String = if (localPropertiesFile.exists()) {
   val props = Properties()
   props.load(localPropertiesFile.inputStream())
-  props.getProperty("openai_api_key", "")
+  props.getProperty("gemini_api_key", "")
+} else {
+  ""
+}
+
+// Load Google Maps API key from local.properties
+val mapsApiKey: String = if (localPropertiesFile.exists()) {
+  val props = Properties()
+  props.load(localPropertiesFile.inputStream())
+  props.getProperty("google_maps_api_key", "")
 } else {
   ""
 }
@@ -40,8 +49,12 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     vectorDrawables { useSupportLibrary = true }
     
-    // OpenAI API Key
-    buildConfigField("String", "OPENAI_API_KEY", "\"$openaiApiKey\"")
+    // Gemini API Key
+    buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
+    
+    // Google Maps API Key
+    buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
+    manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
   }
 
   buildTypes {
@@ -90,6 +103,10 @@ dependencies {
   
   // JSON parsing
   implementation("com.google.code.gson:gson:2.10.1")
+  
+  // Google Maps for Compose
+  implementation("com.google.maps.android:maps-compose:4.3.0")
+  implementation("com.google.android.gms:play-services-maps:18.2.0")
   
   androidTestImplementation(libs.androidx.ui.test.junit4)
   androidTestImplementation(libs.androidx.test.uiautomator)

@@ -2,7 +2,7 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2" project="landmarkguide">
 
     <!-- App Name -->
-    <string name="app_name">Landmark Guide</string>
+    <string name="app_name">Humain Eyes</string>
 
     <!-- Home Screen -->
     <string name="register_button_title" description="Connect App">Connect my glasses</string>
@@ -22,8 +22,8 @@
 
     <!-- Non Stream Screen -->
     <string name="camera_access_icon_description" description="Camera Access icon description">Landmark Guide icon</string>
-    <string name="non_stream_screen_description" description="Non stream screen description">Tap the Start Guide button to begin exploring. Point your glasses at landmarks to hear AI-powered descriptions.</string>
-    <string name="non_stream_screen_title" description="Non stream screen title">Explore with AI Guide</string>
+    <string name="non_stream_screen_description" description="Non stream screen description">Experience Saudi Arabia like never before. Tour landmarks, translate Arabic text, or explore the world around you with AI-powered voice guidance.</string>
+    <string name="non_stream_screen_title" description="Non stream screen title">Welcome to Humain Eyes</string>
     <string name="waiting_for_active_device" description="Waiting for active device message">Waiting for an active device</string>
 
     <!-- Timer -->

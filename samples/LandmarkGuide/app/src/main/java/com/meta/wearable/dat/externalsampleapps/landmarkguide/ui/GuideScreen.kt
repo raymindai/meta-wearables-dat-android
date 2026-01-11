@@ -17,6 +17,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,38 +31,62 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Collections
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material.icons.filled.TravelExplore
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VolumeUp
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meta.wearable.dat.camera.types.StreamSessionState
 import com.meta.wearable.dat.externalsampleapps.landmarkguide.R
+import com.meta.wearable.dat.externalsampleapps.landmarkguide.guide.GuideMode
 import com.meta.wearable.dat.externalsampleapps.landmarkguide.guide.GuideViewModel
+import com.meta.wearable.dat.externalsampleapps.landmarkguide.guide.SavedScene
 import com.meta.wearable.dat.externalsampleapps.landmarkguide.stream.StreamViewModel
 import com.meta.wearable.dat.externalsampleapps.landmarkguide.wearables.WearablesViewModel
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberCameraPositionState
 
 @Composable
 fun GuideScreen(
@@ -80,8 +106,15 @@ fun GuideScreen(
     val guideUiState by guideViewModel.uiState.collectAsStateWithLifecycle()
     val isSpeaking by guideViewModel.isSpeaking.collectAsStateWithLifecycle()
 
-    // Start streaming when screen appears
-    LaunchedEffect(Unit) { streamViewModel.startStream() }
+    // Start streaming when screen appears, cleanup when leaving
+    DisposableEffect(Unit) {
+        streamViewModel.startStream()
+        onDispose {
+            // Cleanup all resources when leaving this screen
+            guideViewModel.cleanup()
+            streamViewModel.stopStream()
+        }
+    }
 
     // Update guide viewmodel with current frames
     LaunchedEffect(streamUiState.videoFrame) {
@@ -126,47 +159,268 @@ fun GuideScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    if (isSpeaking) {
-                        Icon(
-                            imageVector = Icons.Default.VolumeUp,
-                            contentDescription = "Speaking",
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
+                    // Show thumbnail if available
+                    guideUiState.analyzedThumbnail?.let { thumbnail ->
+                        Image(
+                            bitmap = thumbnail.asImageBitmap(),
+                            contentDescription = "Analyzed frame",
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(RoundedCornerShape(8.dp)),
+                            contentScale = ContentScale.Crop
                         )
                     }
-                    Text(
-                        text = guideText,
-                        color = Color.White,
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center,
-                    )
+                    
+                    Column(modifier = Modifier.weight(1f)) {
+                        if (isSpeaking) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.VolumeUp,
+                                    contentDescription = "Speaking",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = "Speaking...",
+                                    color = Color.White.copy(alpha = 0.7f),
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            }
+                        }
+                        Text(
+                            text = guideText,
+                            color = Color.White,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Start,
+                        )
+                    }
                 }
             }
         }
 
-        // Analyzing indicator
+        // Analyzing indicator with thumbnail
         if (guideUiState.isAnalyzing) {
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
                     .background(
-                        color = Color.Black.copy(alpha = 0.6f),
-                        shape = CircleShape
+                        color = Color.Black.copy(alpha = 0.7f),
+                        shape = RoundedCornerShape(16.dp)
                     )
                     .padding(24.dp)
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    CircularProgressIndicator(
+                    // Show thumbnail being analyzed
+                    guideUiState.analyzedThumbnail?.let { thumbnail ->
+                        Image(
+                            bitmap = thumbnail.asImageBitmap(),
+                            contentDescription = "Analyzing frame",
+                            modifier = Modifier
+                                .size(120.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .border(2.dp, Color.White, RoundedCornerShape(12.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                    
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp
+                        )
+                        Text(
+                            text = "Analyzing...",
+                            color = Color.White,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+            }
+        }
+
+        // Auto-analyze countdown timer (top right)
+        if (guideUiState.isAutoAnalyzeEnabled) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .statusBarsPadding()
+                    .padding(16.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .padding(horizontal = 16.dp, vertical = 10.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Auto",
                         color = Color.White,
-                        modifier = Modifier.size(32.dp)
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                    // Countdown number
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .background(Color.White, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "${guideUiState.autoAnalyzeCountdown}",
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                    }
+                }
+            }
+        }
+
+        // Mode selector bar (3 buttons)
+        Row(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .statusBarsPadding()
+                .padding(top = if (guideUiState.lastGuideText != null) 100.dp else 16.dp)
+                .background(
+                    color = Color.Black.copy(alpha = 0.6f),
+                    shape = RoundedCornerShape(24.dp)
+                )
+                .padding(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            // Tour Mode button
+            ModeButton(
+                label = "Tour",
+                icon = Icons.Default.TravelExplore,
+                isSelected = guideUiState.guideMode == GuideMode.TOUR,
+                selectedColor = Color(0xFF2E7D32),
+                onClick = { guideViewModel.setMode(GuideMode.TOUR) }
+            )
+            
+            // General Mode button
+            ModeButton(
+                label = "General",
+                icon = Icons.Default.Visibility,
+                isSelected = guideUiState.guideMode == GuideMode.GENERAL,
+                selectedColor = Color(0xFF1565C0),
+                onClick = { guideViewModel.setMode(GuideMode.GENERAL) }
+            )
+            
+            // Translate Mode button
+            ModeButton(
+                label = "Translate",
+                icon = Icons.Default.Translate,
+                isSelected = guideUiState.guideMode == GuideMode.TRANSLATE,
+                selectedColor = Color(0xFFE65100),
+                onClick = { guideViewModel.setMode(GuideMode.TRANSLATE) }
+            )
+        }
+
+        // Saved scenes gallery button (top left)
+        if (guideUiState.savedScenes.isNotEmpty()) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .statusBarsPadding()
+                    .padding(16.dp)
+            ) {
+                FloatingActionButton(
+                    onClick = { guideViewModel.showGallery() },
+                    containerColor = Color.Black.copy(alpha = 0.7f),
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Collections,
+                            contentDescription = "Gallery",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = "${guideUiState.savedScenes.size}",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
+
+        // Minimap with real Google Maps (center left)
+        val bujairiLocation = LatLng(24.7341, 46.5772) // Bujairi Terrace, Diriyah
+        val cameraPositionState = rememberCameraPositionState {
+            position = CameraPosition.fromLatLngZoom(bujairiLocation, 15f)
+        }
+        
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .padding(16.dp)
+                .width(100.dp)
+                .height(200.dp) // Double height
+                .clip(RoundedCornerShape(12.dp))
+                .border(2.dp, Color.White.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+        ) {
+            GoogleMap(
+                modifier = Modifier.fillMaxSize(),
+                cameraPositionState = cameraPositionState,
+                properties = MapProperties(
+                    isMyLocationEnabled = false
+                ),
+                uiSettings = MapUiSettings(
+                    zoomControlsEnabled = false,
+                    mapToolbarEnabled = false,
+                    compassEnabled = false,
+                    myLocationButtonEnabled = false,
+                    scrollGesturesEnabled = false,
+                    zoomGesturesEnabled = false,
+                    tiltGesturesEnabled = false,
+                    rotationGesturesEnabled = false
+                )
+            ) {
+                Marker(
+                    state = MarkerState(position = bujairiLocation),
+                    title = "Bujairi Terrace",
+                    snippet = "Diriyah, Saudi Arabia"
+                )
+            }
+            
+            // Location label overlay
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(4.dp)
+                    .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(4.dp))
+                    .padding(horizontal = 6.dp, vertical = 3.dp)
+            ) {
+                Column {
+                    Text(
+                        text = "Bujairi Terrace",
+                        color = Color.White,
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "분석 중...",
-                        color = Color.White,
-                        style = MaterialTheme.typography.bodySmall
+                        text = "Diriyah",
+                        color = Color.White.copy(alpha = 0.8f),
+                        fontSize = 7.sp
                     )
                 }
             }
@@ -187,45 +441,69 @@ fun GuideScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     // Auto-analyze toggle
-                    FloatingActionButton(
-                        onClick = { guideViewModel.toggleAutoAnalyze() },
-                        containerColor = if (guideUiState.isAutoAnalyzeEnabled) 
-                            MaterialTheme.colorScheme.primary 
-                        else 
-                            Color.Gray,
-                        modifier = Modifier.size(56.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.AutoAwesome,
-                            contentDescription = "Auto Guide",
-                            tint = Color.White
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        FloatingActionButton(
+                            onClick = { guideViewModel.toggleAutoAnalyze() },
+                            containerColor = if (guideUiState.isAutoAnalyzeEnabled) 
+                                MaterialTheme.colorScheme.primary 
+                            else 
+                                Color.Gray,
+                            modifier = Modifier.size(56.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AutoAwesome,
+                                contentDescription = "Auto Guide",
+                                tint = Color.White
+                            )
+                        }
+                        Text(
+                            text = "Auto",
+                            color = Color.White,
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.padding(top = 4.dp)
                         )
                     }
 
-                    // Manual analyze button (large)
-                    FloatingActionButton(
-                        onClick = { guideViewModel.analyzeNow() },
-                        containerColor = Color.White,
-                        modifier = Modifier.size(72.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Analyze Now",
-                            tint = Color.Black,
-                            modifier = Modifier.size(32.dp)
+                    // Manual analyze button (large) - saves scene
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        FloatingActionButton(
+                            onClick = { guideViewModel.analyzeAndSave() },
+                            containerColor = Color.White,
+                            modifier = Modifier.size(72.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Analyze & Save",
+                                tint = Color.Black,
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+                        Text(
+                            text = "Save",
+                            color = Color.White,
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.padding(top = 4.dp)
                         )
                     }
 
                     // Stop speaking button
-                    FloatingActionButton(
-                        onClick = { guideViewModel.stopSpeaking() },
-                        containerColor = if (isSpeaking) Color.Red else Color.Gray,
-                        modifier = Modifier.size(56.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Stop,
-                            contentDescription = "Stop Speaking",
-                            tint = Color.White
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        FloatingActionButton(
+                            onClick = { guideViewModel.stopSpeaking() },
+                            containerColor = if (isSpeaking) Color.Red else Color.Gray,
+                            modifier = Modifier.size(56.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Stop,
+                                contentDescription = "Stop Speaking",
+                                tint = Color.White
+                            )
+                        }
+                        Text(
+                            text = "Stop",
+                            color = Color.White,
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.padding(top = 4.dp)
                         )
                     }
                 }
@@ -251,25 +529,170 @@ fun GuideScreen(
             }
         }
 
-        // Auto-analyze indicator
-        if (guideUiState.isAutoAnalyzeEnabled) {
+        // Saved scenes gallery overlay
+        if (guideUiState.isGalleryVisible) {
             Box(
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .statusBarsPadding()
-                    .padding(16.dp)
-                    .background(
-                        color = MaterialTheme.colorScheme.primary,
-                        shape = RoundedCornerShape(8.dp)
-                    )
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.85f))
+                    .clickable { guideViewModel.hideGallery() }
             ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .statusBarsPadding()
+                        .navigationBarsPadding()
+                        .padding(16.dp)
+                ) {
+                    // Gallery header
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Saved Scenes (${guideUiState.savedScenes.size})",
+                            color = Color.White,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        IconButton(onClick = { guideViewModel.hideGallery() }) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close",
+                                tint = Color.White
+                            )
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // Saved scenes list
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(guideUiState.savedScenes) { scene ->
+                            SavedSceneCard(
+                                scene = scene,
+                                onSpeak = { guideViewModel.speakScene(scene) },
+                                onDelete = { guideViewModel.deleteScene(scene.id) }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SavedSceneCard(
+    scene: SavedScene,
+    onSpeak: () -> Unit,
+    onDelete: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .width(200.dp)
+            .background(Color.White.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+            .clickable { onSpeak() }
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Thumbnail
+        Image(
+            bitmap = scene.thumbnail.asImageBitmap(),
+            contentDescription = "Saved scene",
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp)
+                .clip(RoundedCornerShape(8.dp)),
+            contentScale = ContentScale.Crop
+        )
+        
+        // Guide text
+        Text(
+            text = scene.guideText,
+            color = Color.White,
+            style = MaterialTheme.typography.bodySmall,
+            maxLines = 3,
+            overflow = TextOverflow.Ellipsis
+        )
+        
+        // Action buttons
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            // Speak button
+            Row(
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp))
+                    .clickable { onSpeak() }
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.VolumeUp,
+                    contentDescription = "Speak",
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp)
+                )
                 Text(
-                    text = "자동 가이드 ON",
+                    text = "Play",
                     color = Color.White,
                     style = MaterialTheme.typography.labelSmall
                 )
             }
+            
+            // Delete button
+            IconButton(
+                onClick = onDelete,
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Delete",
+                    tint = Color.Red.copy(alpha = 0.7f),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ModeButton(
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    isSelected: Boolean,
+    selectedColor: Color,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(if (isSelected) selectedColor else Color.Transparent)
+            .clickable { onClick() }
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = if (isSelected) Color.White else Color.White.copy(alpha = 0.6f),
+                modifier = Modifier.size(16.dp)
+            )
+            Text(
+                text = label,
+                color = if (isSelected) Color.White else Color.White.copy(alpha = 0.6f),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+            )
         }
     }
 }

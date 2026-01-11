@@ -13,6 +13,7 @@
 
 package com.meta.wearable.dat.externalsampleapps.landmarkguide.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -48,6 +49,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -77,9 +79,27 @@ fun NonStreamScreen(
 
   MaterialTheme(colorScheme = darkColorScheme()) {
     Box(
-        modifier = modifier.fillMaxSize().background(Color.Black).padding(all = 24.dp),
+        modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center,
     ) {
+      // Background image
+      Image(
+          painter = painterResource(id = R.drawable.humaineyes_bg),
+          contentDescription = "Background",
+          modifier = Modifier.fillMaxSize(),
+          contentScale = ContentScale.Crop
+      )
+      
+      // Dark overlay for readability
+      Box(
+          modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.3f))
+      )
+      
+      // Content
+      Box(
+          modifier = Modifier.fillMaxSize().padding(all = 24.dp),
+          contentAlignment = Alignment.Center,
+      ) {
       Box(modifier = Modifier.align(Alignment.TopEnd).systemBarsPadding()) {
         IconButton(onClick = { dropdownExpanded = true }) {
           Icon(
@@ -183,6 +203,7 @@ fun NonStreamScreen(
           )
         }
       }
+      } // Close content Box
     }
   }
 }
