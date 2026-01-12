@@ -181,6 +181,14 @@ class WearablesViewModel(application: Application) : AndroidViewModel(applicatio
     _uiState.update { it.copy(isGettingStartedSheetVisible = false) }
   }
 
+  fun showResolutionTest() {
+    _uiState.update { it.copy(isResolutionTestVisible = true) }
+  }
+
+  fun hideResolutionTest() {
+    _uiState.update { it.copy(isResolutionTestVisible = false) }
+  }
+
   override fun onCleared() {
     super.onCleared()
     // Cancel all device monitoring jobs when ViewModel is cleared

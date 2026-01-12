@@ -274,6 +274,13 @@ class GuideViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
+     * Speaks arbitrary text (for mode announcements, etc.)
+     */
+    fun speakText(text: String) {
+        voicePlayer.speak(text)
+    }
+
+    /**
      * Clears the last guide text
      */
     fun clearLastGuide() {

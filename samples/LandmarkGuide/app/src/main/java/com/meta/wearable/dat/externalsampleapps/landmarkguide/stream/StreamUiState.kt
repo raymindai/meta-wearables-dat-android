@@ -23,4 +23,11 @@ data class StreamUiState(
     val isCapturing: Boolean = false,
     val timerMode: TimerMode = TimerMode.UNLIMITED,
     val remainingTimeSeconds: Long? = null,
+    // State management
+    val currentStreamState: StreamState? = null,
+    val streamStartTime: Long = 0L, // Time in ms from stream start to first frame
+    val photoCaptureTime: Long = 0L, // Time in ms from capture request to photo received
+    val micToCaptureTime: Long = 0L, // Time in ms for full Mic→Capture→Mic workflow
+    // DAT Audio
+    val datAudioVolume: Int = 0, // DAT audio volume (RMS)
 )

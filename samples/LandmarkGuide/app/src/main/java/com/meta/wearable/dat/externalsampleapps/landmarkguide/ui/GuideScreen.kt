@@ -58,8 +58,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import android.media.MediaPlayer
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
@@ -79,6 +85,7 @@ import com.meta.wearable.dat.externalsampleapps.landmarkguide.guide.GuideViewMod
 import com.meta.wearable.dat.externalsampleapps.landmarkguide.guide.SavedScene
 import com.meta.wearable.dat.externalsampleapps.landmarkguide.stream.StreamViewModel
 import com.meta.wearable.dat.externalsampleapps.landmarkguide.wearables.WearablesViewModel
+import com.meta.wearable.dat.externalsampleapps.landmarkguide.audio.BluetoothScoAudioCapture
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -105,12 +112,56 @@ fun GuideScreen(
     val streamUiState by streamViewModel.uiState.collectAsStateWithLifecycle()
     val guideUiState by guideViewModel.uiState.collectAsStateWithLifecycle()
     val isSpeaking by guideViewModel.isSpeaking.collectAsStateWithLifecycle()
+    
+    // Background music player
+    val context = LocalContext.current
+    
+    // Haptic feedback for button clicks
+    val view = LocalView.current
+    val playClickSound = {
+        view.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
+    }
+    
+    val mediaPlayer = remember {
+        MediaPlayer.create(context, R.raw.humaineye_bgm).apply {
+            isLooping = true
+            setVolume(0.2f, 0.2f) // 20% volume so TTS is clearly audible
+        }
+    }
+    
+    // Music playing state
+    var isMusicPlaying by remember { mutableStateOf(true) }
+    
+    val toggleMusic = {
+        playClickSound()
+        if (isMusicPlaying) {
+            mediaPlayer.pause()
+        } else {
+            mediaPlayer.start()
+        }
+        isMusicPlaying = !isMusicPlaying
+    }
+    
+    // Helper function to set mode with TTS announcement
+    fun setModeWithAnnouncement(mode: GuideMode) {
+        guideViewModel.setMode(mode)
+        playClickSound()
+        val modeName = when(mode) {
+            GuideMode.TOUR -> "Tour mode"
+            GuideMode.GENERAL -> "General mode"
+            GuideMode.TRANSLATE -> "Translate mode"
+        }
+        guideViewModel.speakText(modeName)
+    }
 
-    // Start streaming when screen appears, cleanup when leaving
+    // Start streaming and music when screen appears, cleanup when leaving
     DisposableEffect(Unit) {
         streamViewModel.startStream()
+        mediaPlayer.start()
         onDispose {
             // Cleanup all resources when leaving this screen
+            mediaPlayer.stop()
+            mediaPlayer.release()
             guideViewModel.cleanup()
             streamViewModel.stopStream()
         }
@@ -142,17 +193,22 @@ fun GuideScreen(
             )
         }
 
-        // Guide text overlay (top)
+        // Guide text overlay (below mode selector) - tap to dismiss
         guideUiState.lastGuideText?.let { guideText ->
             Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .statusBarsPadding()
+                    .padding(top = 56.dp)
                     .padding(horizontal = 16.dp, vertical = 8.dp)
                     .background(
                         color = Color.Black.copy(alpha = 0.7f),
                         shape = RoundedCornerShape(12.dp)
                     )
+                    .clickable { 
+                        playClickSound()
+                        guideViewModel.clearLastGuide() 
+                    }
                     .padding(16.dp)
             ) {
                 Row(
@@ -248,52 +304,35 @@ fun GuideScreen(
             }
         }
 
-        // Auto-analyze countdown timer (top right)
+        // Auto-analyze countdown timer (right of mode selector, same height)
         if (guideUiState.isAutoAnalyzeEnabled) {
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .statusBarsPadding()
-                    .padding(16.dp)
-                    .background(
-                        color = MaterialTheme.colorScheme.primary,
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                    .padding(horizontal = 16.dp, vertical = 10.dp)
+                    .padding(top = 8.dp, end = 16.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                FloatingActionButton(
+                    onClick = { guideViewModel.toggleAutoAnalyze() },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(48.dp)
                 ) {
                     Text(
-                        text = "Auto",
+                        text = "${guideUiState.autoAnalyzeCountdown}",
                         color = Color.White,
-                        style = MaterialTheme.typography.labelMedium
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
                     )
-                    // Countdown number
-                    Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .background(Color.White, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "${guideUiState.autoAnalyzeCountdown}",
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        )
-                    }
                 }
             }
         }
 
-        // Mode selector bar (3 buttons)
+        // Mode selector bar (3 buttons) - always at top
         Row(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .statusBarsPadding()
-                .padding(top = if (guideUiState.lastGuideText != null) 100.dp else 16.dp)
+                .padding(top = 8.dp)
                 .background(
                     color = Color.Black.copy(alpha = 0.6f),
                     shape = RoundedCornerShape(24.dp)
@@ -307,7 +346,7 @@ fun GuideScreen(
                 icon = Icons.Default.TravelExplore,
                 isSelected = guideUiState.guideMode == GuideMode.TOUR,
                 selectedColor = Color(0xFF2E7D32),
-                onClick = { guideViewModel.setMode(GuideMode.TOUR) }
+                onClick = { setModeWithAnnouncement(GuideMode.TOUR) }
             )
             
             // General Mode button
@@ -316,7 +355,7 @@ fun GuideScreen(
                 icon = Icons.Default.Visibility,
                 isSelected = guideUiState.guideMode == GuideMode.GENERAL,
                 selectedColor = Color(0xFF1565C0),
-                onClick = { guideViewModel.setMode(GuideMode.GENERAL) }
+                onClick = { setModeWithAnnouncement(GuideMode.GENERAL) }
             )
             
             // Translate Mode button
@@ -325,17 +364,17 @@ fun GuideScreen(
                 icon = Icons.Default.Translate,
                 isSelected = guideUiState.guideMode == GuideMode.TRANSLATE,
                 selectedColor = Color(0xFFE65100),
-                onClick = { guideViewModel.setMode(GuideMode.TRANSLATE) }
+                onClick = { setModeWithAnnouncement(GuideMode.TRANSLATE) }
             )
         }
 
-        // Saved scenes gallery button (top left)
+        // Saved scenes gallery button (left of mode selector, same height)
         if (guideUiState.savedScenes.isNotEmpty()) {
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .statusBarsPadding()
-                    .padding(16.dp)
+                    .padding(top = 8.dp, start = 16.dp)
             ) {
                 FloatingActionButton(
                     onClick = { guideViewModel.showGallery() },
@@ -363,7 +402,7 @@ fun GuideScreen(
             }
         }
 
-        // Minimap with real Google Maps (center left)
+        // Minimap (center left)
         val bujairiLocation = LatLng(24.7341, 46.5772) // Bujairi Terrace, Diriyah
         val cameraPositionState = rememberCameraPositionState {
             position = CameraPosition.fromLatLngZoom(bujairiLocation, 15f)
@@ -372,9 +411,9 @@ fun GuideScreen(
         Box(
             modifier = Modifier
                 .align(Alignment.CenterStart)
-                .padding(16.dp)
-                .width(100.dp)
-                .height(200.dp) // Double height
+                .padding(start = 16.dp)
+                .width(80.dp)
+                .height(140.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .border(2.dp, Color.White.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
         ) {
@@ -510,21 +549,75 @@ fun GuideScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Stop stream button
+                // Stop stream button with music toggle
                 Row(
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     SwitchButton(
                         label = stringResource(R.string.stop_stream_button_title),
                         onClick = {
+                            playClickSound()
                             guideViewModel.stopAutoAnalyze()
                             streamViewModel.stopStream()
                             wearablesViewModel.navigateToDeviceSelection()
                         },
                         isDestructive = true,
-                        modifier = Modifier.fillMaxWidth(0.6f),
+                        modifier = Modifier.weight(1f),
                     )
+                    
+                    Spacer(modifier = Modifier.width(8.dp))
+                    
+                    // Music toggle button
+                    FloatingActionButton(
+                        onClick = { toggleMusic() },
+                        containerColor = if (isMusicPlaying) Color(0xFF1DB954) else Color.Gray,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isMusicPlaying) Icons.Default.VolumeUp else Icons.Default.Stop,
+                            contentDescription = "Toggle Music",
+                            tint = Color.White
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.width(8.dp))
+                    
+                    // SCO Mic Test button
+                    var micStatus by remember { mutableStateOf("🎤") }
+                    FloatingActionButton(
+                        onClick = {
+                            micStatus = "⏳"
+                            val scoCapture = BluetoothScoAudioCapture(context)
+                            scoCapture.setListener(object : BluetoothScoAudioCapture.AudioCaptureListener {
+                                override fun onAudioData(data: ByteArray, size: Int) {
+                                    var sum = 0.0
+                                    for (i in 0 until minOf(size, 100) step 2) {
+                                        val sample = (data[i].toInt() and 0xFF) or (data[i + 1].toInt() shl 8)
+                                        sum += sample * sample
+                                    }
+                                    val rms = kotlin.math.sqrt(sum / 50).toInt()
+                                    micStatus = "$rms"
+                                }
+                                override fun onScoConnected() {
+                                    micStatus = "🔊"
+                                    scoCapture.startRecording()
+                                }
+                                override fun onScoDisconnected() { micStatus = "❌" }
+                                override fun onError(message: String) { micStatus = "❌" }
+                            })
+                            scoCapture.startScoConnection()
+                        },
+                        containerColor = Color(0xFF2196F3),
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Text(
+                            text = micStatus,
+                            color = Color.White,
+                            fontSize = 14.sp
+                        )
+                    }
                 }
             }
         }

@@ -61,7 +61,14 @@ import com.meta.wearable.dat.core.types.Permission
 import com.meta.wearable.dat.core.types.PermissionStatus
 import com.meta.wearable.dat.core.types.RegistrationState
 import com.meta.wearable.dat.externalsampleapps.landmarkguide.R
+import com.meta.wearable.dat.externalsampleapps.landmarkguide.audio.BluetoothScoAudioCapture
 import com.meta.wearable.dat.externalsampleapps.landmarkguide.wearables.WearablesViewModel
+import androidx.compose.ui.platform.LocalContext
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import android.Manifest as AndroidManifest
+import android.content.pm.PackageManager
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -153,6 +160,13 @@ fun NonStreamScreen(
             textAlign = TextAlign.Center,
             color = Color.White,
         )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "Powered by ALLAM",
+            style = MaterialTheme.typography.labelSmall,
+            textAlign = TextAlign.Center,
+            color = Color.White.copy(alpha = 0.6f),
+        )
       }
 
       Column(
@@ -179,10 +193,63 @@ fun NonStreamScreen(
           }
         }
 
+        // SCO Microphone Test Button
+        var scoTestStatus by remember { mutableStateOf("🎤 Test Glasses Mic") }
+        var isScoTesting by remember { mutableStateOf(false) }
+        val context = LocalContext.current
+        
+        // Permission launcher for microphone
+        val permissionLauncher = rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted ->
+            if (isGranted) {
+                scoTestStatus = "⏳ Connecting SCO..."
+                isScoTesting = true
+                startScoTest(context, 
+                    onStatusUpdate = { scoTestStatus = it },
+                    onTestingUpdate = { isScoTesting = it }
+                )
+            } else {
+                scoTestStatus = "❌ Mic permission denied"
+            }
+        }
+        
+        SwitchButton(
+            label = scoTestStatus,
+            onClick = {
+                if (!isScoTesting) {
+                    // Check permission first
+                    if (ContextCompat.checkSelfPermission(context, AndroidManifest.permission.RECORD_AUDIO) 
+                        == PackageManager.PERMISSION_GRANTED) {
+                        scoTestStatus = "⏳ Connecting SCO..."
+                        isScoTesting = true
+                        startScoTest(context,
+                            onStatusUpdate = { scoTestStatus = it },
+                            onTestingUpdate = { isScoTesting = it }
+                        )
+                    } else {
+                        // Request permission
+                        permissionLauncher.launch(AndroidManifest.permission.RECORD_AUDIO)
+                    }
+                }
+            },
+            enabled = uiState.hasActiveDevice,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
         // Start Streaming Button
         SwitchButton(
             label = stringResource(R.string.stream_button_title),
             onClick = { viewModel.navigateToStreaming(onRequestWearablesPermission) },
+            enabled = uiState.hasActiveDevice,
+        )
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        // Test Mode Button
+        SwitchButton(
+            label = "🧪 Test Mode",
+            onClick = { viewModel.showResolutionTest() },
             enabled = uiState.hasActiveDevice,
         )
       }
@@ -203,9 +270,49 @@ fun NonStreamScreen(
           )
         }
       }
-      } // Close content Box
+    }
     }
   }
+}
+
+// Helper function for SCO test
+private fun startScoTest(
+    context: android.content.Context,
+    onStatusUpdate: (String) -> Unit,
+    onTestingUpdate: (Boolean) -> Unit
+) {
+    val scoCapture = BluetoothScoAudioCapture(context)
+    scoCapture.setListener(object : BluetoothScoAudioCapture.AudioCaptureListener {
+        override fun onAudioData(data: ByteArray, size: Int) {
+            var sum = 0.0
+            for (i in 0 until minOf(size, 100) step 2) {
+                val sample = (data[i].toInt() and 0xFF) or (data[i + 1].toInt() shl 8)
+                sum += sample * sample
+            }
+            val rms = kotlin.math.sqrt(sum / 50).toInt()
+            onStatusUpdate("✅ Mic Active! Vol: $rms")
+        }
+        
+        override fun onScoConnected() {
+            onStatusUpdate("🔊 SCO Connected! Recording...")
+            scoCapture.startRecording()
+        }
+        
+        override fun onScoDisconnected() {
+            onStatusUpdate("❌ SCO Disconnected")
+            onTestingUpdate(false)
+        }
+        
+        override fun onError(message: String) {
+            onStatusUpdate("❌ $message")
+            onTestingUpdate(false)
+        }
+    })
+    
+    if (!scoCapture.startScoConnection()) {
+        onStatusUpdate("❌ SCO not available")
+        onTestingUpdate(false)
+    }
 }
 
 @Composable

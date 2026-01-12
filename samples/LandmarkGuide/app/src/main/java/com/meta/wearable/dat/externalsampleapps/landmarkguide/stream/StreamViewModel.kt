@@ -18,8 +18,10 @@
 package com.meta.wearable.dat.externalsampleapps.landmarkguide.stream
 
 import android.app.Application
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.media.AudioManager
 import android.graphics.BitmapFactory
 import android.graphics.ImageFormat
 import android.graphics.Matrix
@@ -73,8 +75,41 @@ class StreamViewModel(
   private val streamTimer = StreamTimer()
 
   private var videoJob: Job? = null
+  private var audioJob: Job? = null // DAT audio collection job
   private var stateJob: Job? = null
   private var timerJob: Job? = null
+  private var isRestarting = false // Flag to prevent navigation during intentional restart
+  
+  /** Set to true to completely disable auto-navigation (for test screens) */
+  var disableNavigation = false
+  
+  /** Silent Mode Change - mute volume for 0.5s during state transitions */
+  var silentModeChange = false
+  
+  private val audioManager: AudioManager by lazy {
+    getApplication<Application>().getSystemService(Context.AUDIO_SERVICE) as AudioManager
+  }
+  
+  private var savedVolume = -1  // Store volume before muting
+  private var volumeRestoreJob: Job? = null
+  
+  /** Temporarily mute volume for duration ms, then restore */
+  private fun temporaryMute(durationMs: Long) {
+    volumeRestoreJob?.cancel()
+    val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+    if (savedVolume < 0) {
+      savedVolume = currentVolume
+    }
+    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0)
+    Log.d(TAG, "🔇 Volume muted (was $savedVolume)")
+    
+    volumeRestoreJob = viewModelScope.launch {
+      kotlinx.coroutines.delay(durationMs)
+      audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, savedVolume, 0)
+      Log.d(TAG, "🔊 Volume restored to $savedVolume")
+      savedVolume = -1
+    }
+  }
 
   init {
     // Collect timer state
@@ -114,42 +149,189 @@ class StreamViewModel(
   }
 
   fun startStream() {
+    startStreamWithState(StreamState.AI_RECOGNITION) // Default: Medium @ 30fps
+  }
+  
+  /**
+   * Start stream with specific state configuration
+   */
+  fun startStreamWithState(state: StreamState) {
+    if (!state.videoEnabled) {
+      Log.d(TAG, "State $state does not require video, skipping stream start")
+      _uiState.update { it.copy(currentStreamState = state) }
+      return
+    }
+    
+    val quality = state.videoQuality ?: VideoQuality.MEDIUM
+    val fps = state.frameRate ?: 24
+    
+    Log.d(TAG, "Starting stream with state: $state (${quality.name} @ ${fps}fps)")
+    val startTime = System.currentTimeMillis()
+    
+    // Set flag to prevent navigation during stream restart
+    isRestarting = true
+    
+    // Cancel all jobs FIRST to prevent state collection from old session
+    videoJob?.cancel()
+    videoJob = null
+    audioJob?.cancel()
+    audioJob = null
+    stateJob?.cancel()
+    stateJob = null
+    
+    // Close old session
+    streamSession?.close()
+    streamSession = null
+    
+    // Reset UI state for new stream
+    _uiState.update { it.copy(streamStartTime = 0L, streamSessionState = StreamSessionState.STOPPED) }
+    
     resetTimer()
     streamTimer.startTimer()
-    videoJob?.cancel()
-    stateJob?.cancel()
+    
+    // Start new session immediately (no delay)
     val streamSession =
         Wearables.startStreamSession(
                 getApplication(),
                 deviceSelector,
-                StreamConfiguration(videoQuality = VideoQuality.MEDIUM, 24),
+                StreamConfiguration(videoQuality = quality, fps),
             )
-            .also { streamSession = it }
-    videoJob = viewModelScope.launch { streamSession.videoStream.collect { handleVideoFrame(it) } }
+            .also { this.streamSession = it }
+    
+    _uiState.update { it.copy(currentStreamState = state) }
+    
+    videoJob = viewModelScope.launch { 
+      streamSession.videoStream.collect { frame ->
+        // Log first frame timing
+        if (_uiState.value.streamStartTime == 0L) {
+          val elapsed = System.currentTimeMillis() - startTime
+          Log.d(TAG, "First frame received in ${elapsed}ms")
+          _uiState.update { it.copy(streamStartTime = elapsed) }
+        }
+        handleVideoFrame(frame) 
+      } 
+    }
     stateJob =
         viewModelScope.launch {
+          var startingTimeoutJob: kotlinx.coroutines.Job? = null
+          val currentTargetState = state  // Capture the target state for retry
+          
           streamSession.state.collect { currentState ->
             val prevState = _uiState.value.streamSessionState
+            Log.d(TAG, "📊 Session state: $prevState → $currentState (isRestarting=$isRestarting, disableNav=$disableNavigation)")
             _uiState.update { it.copy(streamSessionState = currentState) }
 
-            // navigate back when state transitioned to STOPPED
-            if (currentState != prevState && currentState == StreamSessionState.STOPPED) {
-              stopStream()
-              wearablesViewModel.navigateToDeviceSelection()
+            // Cancel timeout job if we progress past STARTING
+            if (currentState != StreamSessionState.STARTING && currentState != StreamSessionState.STOPPED) {
+              startingTimeoutJob?.cancel()
+              startingTimeoutJob = null
+            }
+
+            // Handle state transitions
+            when (currentState) {
+              StreamSessionState.STARTING -> {
+                Log.d(TAG, "⏳ Session starting...")
+                // Start timeout job - if we stay in STARTING for 5 seconds, reset and retry
+                startingTimeoutJob = viewModelScope.launch {
+                  kotlinx.coroutines.delay(5000)
+                  Log.w(TAG, "⚠️ STARTING timeout - doing full reset before retry")
+                  _uiState.update { it.copy(streamSessionState = StreamSessionState.STOPPED) }
+                  // Full reset
+                  stopStream()
+                  // Wait for SDK to fully cleanup
+                  kotlinx.coroutines.delay(1000)
+                  Log.d(TAG, "🔄 Retrying stream start after reset")
+                  startStreamWithState(currentTargetState)
+                }
+              }
+              StreamSessionState.STARTED -> Log.d(TAG, "✓ Session started, waiting for stream...")
+              StreamSessionState.STREAMING -> {
+                Log.d(TAG, "🎥 Streaming active!")
+                // Silent mode change - mute for 0.5s during transition
+                if (silentModeChange) {
+                  temporaryMute(500)
+                }
+                // Reset isRestarting flag when stream is active (state-based, no delay)
+                if (isRestarting) {
+                  isRestarting = false
+                  Log.d(TAG, "✅ isRestarting reset on STREAMING state")
+                }
+              }
+              StreamSessionState.STOPPING -> Log.d(TAG, "⚠️ Session stopping...")
+              StreamSessionState.STOPPED -> {
+                Log.d(TAG, "⏹️ Session stopped")
+                // Silent mode change - mute for 0.5s during transition
+                if (silentModeChange && currentState != prevState) {
+                  temporaryMute(500)
+                }
+                // Only navigate if not intentional restart and navigation enabled
+                if (currentState != prevState && !isRestarting && !disableNavigation) {
+                  Log.d(TAG, "⛔ Unexpected stop - navigating to device selection")
+                  stopStream()
+                  wearablesViewModel.navigateToDeviceSelection()
+                }
+              }
+              StreamSessionState.CLOSED -> {
+                Log.d(TAG, "🔒 Session closed (final state)")
+                // Session is closed - cannot be reused
+              }
             }
           }
         }
+  }
+  
+  /**
+   * Switch to a different stream state (resolution/framerate change)
+   */
+  fun switchToState(newState: StreamState) {
+    val currentState = _uiState.value.currentStreamState
+    Log.d(TAG, "Switching from $currentState to $newState")
+    
+    if (!newState.videoEnabled) {
+      // Switching to audio-only, stop video stream
+      // isRestarting is set true to prevent navigation during stop
+      isRestarting = true
+      stopStream()
+      _uiState.update { it.copy(currentStreamState = newState) }
+      // Reset immediately since we're staying in test screen (no new stream to wait for)
+      isRestarting = false
+      Log.d(TAG, "Switched to audio-only mode")
+      return
+    }
+    
+    if (currentState?.videoEnabled == true && newState.videoEnabled) {
+      // Both have video - need to restart stream with new config
+      val switchStartTime = System.currentTimeMillis()
+      Log.d(TAG, "State switch: stopping current stream first")
+      stopStream()
+      
+      // Launch new session with small delay to ensure SDK cleanup completes
+      viewModelScope.launch {
+        // Wait for SDK to fully close previous session
+        kotlinx.coroutines.delay(300)
+        Log.d(TAG, "State switch: starting new stream after SDK cleanup")
+        startStreamWithState(newState)
+        Log.d(TAG, "State switch completed in ${System.currentTimeMillis() - switchStartTime}ms")
+      }
+    } else {
+      // Starting video from audio-only state (no previous stream to close)
+      startStreamWithState(newState)
+    }
   }
 
   fun stopStream() {
     videoJob?.cancel()
     videoJob = null
+    audioJob?.cancel()
+    audioJob = null
     stateJob?.cancel()
     stateJob = null
     streamSession?.close()
     streamSession = null
     streamTimer.stopTimer()
-    _uiState.update { INITIAL_STATE }
+    // Preserve capturedPhoto when stopping stream
+    val currentPhoto = _uiState.value.capturedPhoto
+    _uiState.update { INITIAL_STATE.copy(capturedPhoto = currentPhoto) }
   }
 
   fun capturePhoto() {
@@ -160,19 +342,21 @@ class StreamViewModel(
 
     if (uiState.value.streamSessionState == StreamSessionState.STREAMING) {
       Log.d(TAG, "Starting photo capture")
-      _uiState.update { it.copy(isCapturing = true) }
+      val captureStartTime = System.currentTimeMillis()
+      _uiState.update { it.copy(isCapturing = true, photoCaptureTime = 0L) }
 
       viewModelScope.launch {
         streamSession
             ?.capturePhoto()
             ?.onSuccess { photoData ->
-              Log.d(TAG, "Photo capture successful")
+              val elapsed = System.currentTimeMillis() - captureStartTime
+              Log.d(TAG, "Photo capture successful in ${elapsed}ms")
               handlePhotoData(photoData)
-              _uiState.update { it.copy(isCapturing = false) }
+              _uiState.update { it.copy(isCapturing = false, photoCaptureTime = elapsed) }
             }
             ?.onFailure {
               Log.e(TAG, "Photo capture failed")
-              _uiState.update { it.copy(isCapturing = false) }
+              _uiState.update { it.copy(isCapturing = false, photoCaptureTime = -1L) }
             }
       }
     } else {
@@ -180,6 +364,88 @@ class StreamViewModel(
           TAG,
           "Cannot capture photo: stream not active (state=${uiState.value.streamSessionState})",
       )
+    }
+  }
+
+  /**
+   * Capture photo and return to original mode.
+   * Workflow: Save current mode → Switch to capture quality → Capture photo → Return to original mode
+   * @param captureQuality: The quality to capture at (STANDBY=LOW, AI_RECOGNITION=MED, PHOTO_CAPTURE=HIGH)
+   */
+  fun captureWithReturn(captureQuality: StreamState) {
+    if (uiState.value.isCapturing) {
+      Log.d(TAG, "Capture already in progress, ignoring request")
+      return
+    }
+    
+    val originalState = uiState.value.currentStreamState
+    Log.d(TAG, "Starting capture workflow: ${originalState?.name ?: "OFF"} → ${captureQuality.name} → ${originalState?.name ?: "OFF"}")
+    val workflowStartTime = System.currentTimeMillis()
+    _uiState.update { it.copy(isCapturing = true, micToCaptureTime = 0L) }
+    
+    viewModelScope.launch {
+      // Step 1: Switch to capture quality mode
+      isRestarting = true
+      stopStream()
+      startStreamWithState(captureQuality)
+      isRestarting = false
+      
+      // Step 2: Wait for stream to be ready (wait for first frame)
+      var waitCount = 0
+      while (uiState.value.streamSessionState != StreamSessionState.STREAMING && waitCount < 50) {
+        kotlinx.coroutines.delay(100)
+        waitCount++
+      }
+      
+      if (uiState.value.streamSessionState != StreamSessionState.STREAMING) {
+        Log.e(TAG, "Failed to start stream for capture")
+        _uiState.update { it.copy(isCapturing = false, micToCaptureTime = -1L) }
+        return@launch
+      }
+      
+      // Step 2.5: Wait for first frame to arrive (STREAMING state doesn't mean frames are ready)
+      Log.d(TAG, "STREAMING state reached, waiting for first frame...")
+      kotlinx.coroutines.delay(1000)  // Wait 1 second for frames to stabilize
+      
+      // Step 3: Capture photo
+      Log.d(TAG, "Stream ready, capturing photo at ${captureQuality.name}")
+      streamSession?.capturePhoto()
+          ?.onSuccess { photoData ->
+            Log.d(TAG, "Photo captured successfully")
+            handlePhotoData(photoData)
+            
+            // Step 4: Return to original mode (if it was something)
+            if (originalState != null && originalState != StreamState.OFF) {
+              if (originalState.videoEnabled) {
+                // Return to a video mode - switch to that quality
+                Log.d(TAG, "Returning to original video mode: ${originalState.name}")
+                isRestarting = true
+                stopStream()
+                switchToState(originalState)
+                isRestarting = false
+              } else {
+                // Return to audio-only mode - just stop the video stream
+                Log.d(TAG, "Returning to audio-only mode: ${originalState.name}")
+                isRestarting = true
+                stopStream()
+                _uiState.update { it.copy(currentStreamState = originalState) }
+                isRestarting = false
+              }
+            } else {
+              // Original was OFF - just stop everything
+              Log.d(TAG, "Original was OFF, stopping stream")
+              stopStream()
+            }
+            
+            val elapsed = System.currentTimeMillis() - workflowStartTime
+            Log.d(TAG, "Capture workflow completed in ${elapsed}ms")
+            _uiState.update { it.copy(isCapturing = false, photoCaptureTime = elapsed, micToCaptureTime = elapsed) }
+          }
+          ?.onFailure {
+            Log.e(TAG, "Photo capture failed")
+            val elapsed = System.currentTimeMillis() - workflowStartTime
+            _uiState.update { it.copy(isCapturing = false, photoCaptureTime = -1L, micToCaptureTime = -elapsed) }
+          }
     }
   }
 
@@ -268,19 +534,27 @@ class StreamViewModel(
   }
 
   private fun handlePhotoData(photo: PhotoData) {
+    Log.d(TAG, "handlePhotoData called, photo type: ${photo::class.simpleName}")
     val capturedPhoto =
         when (photo) {
-          is PhotoData.Bitmap -> photo.bitmap
+          is PhotoData.Bitmap -> {
+            Log.d(TAG, "Photo is Bitmap: ${photo.bitmap.width}x${photo.bitmap.height}")
+            photo.bitmap
+          }
           is PhotoData.HEIC -> {
+            Log.d(TAG, "Photo is HEIC, decoding...")
             val byteArray = ByteArray(photo.data.remaining())
             photo.data.get(byteArray)
 
             // Extract EXIF transformation matrix and apply to bitmap
             val exifInfo = getExifInfo(byteArray)
             val transform = getTransform(exifInfo)
-            decodeHeic(byteArray, transform)
+            val decoded = decodeHeic(byteArray, transform)
+            Log.d(TAG, "HEIC decoded: ${decoded.width}x${decoded.height}")
+            decoded
           }
         }
+    Log.d(TAG, "Setting capturedPhoto: ${capturedPhoto.width}x${capturedPhoto.height}")
     _uiState.update { it.copy(capturedPhoto = capturedPhoto, isShareDialogVisible = true) }
   }
 
