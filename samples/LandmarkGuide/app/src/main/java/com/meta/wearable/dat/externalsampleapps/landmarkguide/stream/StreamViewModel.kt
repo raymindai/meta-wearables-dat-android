@@ -83,6 +83,12 @@ class StreamViewModel(
   /** Silent Mode Change - mute volume for 0.5s during state transitions */
   var silentModeChange = false
   
+  /** No Video Preview - don't display video stream on mobile (but still receive frames) */
+  var noVideoPreview = false
+  
+  /** No Capture Preview - don't display captured photos preview on mobile */
+  var noCapturePreview = false
+  
   private val audioManager: AudioManager by lazy {
     getApplication<Application>().getSystemService(Context.AUDIO_SERVICE) as AudioManager
   }

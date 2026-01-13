@@ -22,6 +22,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -237,10 +238,16 @@ fun ResolutionTestScreen(
                         .fillMaxSize()
                         .clip(RoundedCornerShape(8.dp))
                         .background(Color(0xFF1E1E1E))
-                        .border(2.dp, Color(0xFF4CAF50), RoundedCornerShape(8.dp)),
+                        .border(2.dp, if (streamViewModel.noVideoPreview) Color.Yellow else Color(0xFF4CAF50), RoundedCornerShape(8.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (streamUiState.videoFrame != null) {
+                    if (streamViewModel.noVideoPreview) {
+                        // No Preview mode - show indicator only
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("📵", fontSize = 24.sp)
+                            Text("Preview OFF", color = Color.Yellow, fontSize = 10.sp)
+                        }
+                    } else if (streamUiState.videoFrame != null) {
                         Image(
                             bitmap = streamUiState.videoFrame!!.asImageBitmap(),
                             contentDescription = "Stream preview",
@@ -464,8 +471,22 @@ fun ResolutionTestScreen(
                 fontSize = 11.sp
             )
         }
+        // SCO Mic Status and Volume - first row
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(6.dp))
+                .background(Color(0xFF1E1E1E))
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(micStatus, color = if (micStatus == "CONNECTED") Color.Green else Color.Gray, fontSize = 10.sp)
+            Text("🔊 $micVolume", color = if (micVolume > 100) Color.Green else Color.Gray, fontSize = 10.sp)
+        }
+        
         Spacer(modifier = Modifier.height(4.dp))
         
+        // Buttons row - second row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -477,7 +498,7 @@ fun ResolutionTestScreen(
                     startScoMic()
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
-                modifier = Modifier.weight(0.7f),
+                modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(6.dp)
             ) {
                 Text("ON", fontSize = 10.sp)
@@ -491,27 +512,14 @@ fun ResolutionTestScreen(
                     micVolume = 0
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
-                modifier = Modifier.weight(0.7f),
+                modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(6.dp)
             ) {
                 Text("OFF", fontSize = 10.sp)
             }
             
-            // SCO Mic Status and Volume
-            Row(
-                modifier = Modifier
-                    .weight(1.2f)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(Color(0xFF1E1E1E))
-                    .padding(horizontal = 6.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(micStatus, color = if (micStatus == "CONNECTED") Color.Green else Color.Gray, fontSize = 9.sp)
-                Text("🔊$micVolume", color = if (micVolume > 100) Color.Green else Color.Gray, fontSize = 9.sp)
-            }
-            
             // Mic Source Dropdown
-            Box(modifier = Modifier.weight(0.9f)) {
+            Box(modifier = Modifier.weight(1f)) {
                 Button(
                     onClick = { micDropdownExpanded = true },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF333333)),
@@ -653,31 +661,68 @@ fun ResolutionTestScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("📹 Video Stream", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            // Left: Title + No Preview toggle
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text("📹 Video Stream", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                
+                // No Preview toggle (hide video stream display)
+                var noVideoPreview by remember { mutableStateOf(streamViewModel.noVideoPreview) }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        "📵",
+                        color = if (noVideoPreview) Color.Yellow else Color.Gray,
+                        fontSize = 10.sp
+                    )
+                    Box(modifier = Modifier.scale(0.6f).height(20.dp)) {
+                        Switch(
+                            checked = noVideoPreview,
+                            onCheckedChange = { 
+                                noVideoPreview = it
+                                streamViewModel.noVideoPreview = it
+                                log(if (it) "📵 Video Preview OFF" else "📹 Video Preview ON")
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.Yellow,
+                                checkedTrackColor = Color.Yellow.copy(alpha = 0.5f)
+                            )
+                        )
+                    }
+                }
+            }
             
-            // Silent Mode Change toggle
+            // Right: Silent Mode Change toggle
             var silentMode by remember { mutableStateOf(streamViewModel.silentModeChange) }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Text(
-                    "🔇 Silent",
+                    "🔇",
                     color = if (silentMode) Color.Cyan else Color.Gray,
                     fontSize = 10.sp
                 )
-                Switch(
-                    checked = silentMode,
-                    onCheckedChange = { 
-                        silentMode = it
-                        streamViewModel.silentModeChange = it
-                        log(if (it) "🔇 Silent Mode ON" else "🔊 Silent Mode OFF")
-                    },
-                    modifier = Modifier.height(20.dp)
-                )
+                Box(modifier = Modifier.scale(0.6f).height(20.dp)) {
+                    Switch(
+                        checked = silentMode,
+                        onCheckedChange = { 
+                            silentMode = it
+                            streamViewModel.silentModeChange = it
+                            log(if (it) "🔇 Silent Mode ON" else "🔊 Silent Mode OFF")
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.Cyan,
+                            checkedTrackColor = Color.Cyan.copy(alpha = 0.5f)
+                        )
+                    )
+                }
             }
         }
-        Spacer(modifier = Modifier.height(4.dp))
         
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -743,9 +788,40 @@ fun ResolutionTestScreen(
         
         Spacer(modifier = Modifier.height(8.dp))
         
-        // Capture Section
-        Text("📸 Capture", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(4.dp))
+        // Capture Section Header with No Preview toggle
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text("📸 Capture", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            
+            // No Preview toggle for capture (hide video stream display, same as Video Stream toggle)
+            var noVideoPreviewCapture by remember { mutableStateOf(streamViewModel.noVideoPreview) }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    "📵",
+                    color = if (noVideoPreviewCapture) Color.Yellow else Color.Gray,
+                    fontSize = 10.sp
+                )
+                Box(modifier = Modifier.scale(0.6f).height(20.dp)) {
+                    Switch(
+                        checked = noVideoPreviewCapture,
+                        onCheckedChange = { 
+                            noVideoPreviewCapture = it
+                            streamViewModel.noVideoPreview = it
+                            log(if (it) "📵 Stream Preview OFF" else "� Stream Preview ON")
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.Yellow,
+                            checkedTrackColor = Color.Yellow.copy(alpha = 0.5f)
+                        )
+                    )
+                }
+            }
+        }
         
         Row(
             modifier = Modifier.fillMaxWidth(),
