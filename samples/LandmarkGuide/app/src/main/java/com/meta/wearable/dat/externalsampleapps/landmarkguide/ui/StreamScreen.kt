@@ -96,28 +96,11 @@ fun StreamScreen(
             modifier = Modifier.weight(1f),
         )
 
-        // Timer button
-        TimerButton(
-            timerMode = streamUiState.timerMode,
-            onClick = { streamViewModel.cycleTimerMode() },
-        )
         // Photo capture button
         CaptureButton(
             onClick = { streamViewModel.capturePhoto() },
         )
       }
-    }
-
-    // Countdown timer display
-    streamUiState.remainingTimeSeconds?.let { seconds ->
-      val minutes = seconds / 60
-      val remainingSeconds = seconds % 60
-      Text(
-          text = stringResource(id = R.string.time_remaining, minutes, remainingSeconds),
-          color = Color.White,
-          modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding(),
-          textAlign = TextAlign.Center,
-      )
     }
   }
 

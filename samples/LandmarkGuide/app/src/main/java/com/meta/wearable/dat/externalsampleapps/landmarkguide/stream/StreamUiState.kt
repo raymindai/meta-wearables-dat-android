@@ -21,8 +21,6 @@ data class StreamUiState(
     val capturedPhoto: Bitmap? = null,
     val isShareDialogVisible: Boolean = false,
     val isCapturing: Boolean = false,
-    val timerMode: TimerMode = TimerMode.UNLIMITED,
-    val remainingTimeSeconds: Long? = null,
     // State management
     val currentStreamState: StreamState? = null,
     val streamStartTime: Long = 0L, // Time in ms from stream start to first frame
@@ -30,4 +28,6 @@ data class StreamUiState(
     val micToCaptureTime: Long = 0L, // Time in ms for full Mic→Capture→Mic workflow
     // DAT Audio
     val datAudioVolume: Int = 0, // DAT audio volume (RMS)
+    // Stream Errors
+    val lastStreamError: String? = null, // Last stream error (STREAM_ERROR, HINGE_CLOSED, PERMISSIONS_DENIED)
 )

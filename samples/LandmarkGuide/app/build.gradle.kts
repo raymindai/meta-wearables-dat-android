@@ -33,6 +33,15 @@ val mapsApiKey: String = if (localPropertiesFile.exists()) {
   ""
 }
 
+// Load Picovoice API key from local.properties
+val picovoiceApiKey: String = if (localPropertiesFile.exists()) {
+  val props = Properties()
+  props.load(localPropertiesFile.inputStream())
+  props.getProperty("picovoice_api_key", "")
+} else {
+  ""
+}
+
 android {
   namespace = "com.meta.wearable.dat.externalsampleapps.landmarkguide"
   compileSdk = 35
@@ -55,6 +64,9 @@ android {
     // Google Maps API Key
     buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
     manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
+    
+    // Picovoice API Key
+    buildConfigField("String", "PICOVOICE_API_KEY", "\"$picovoiceApiKey\"")
   }
 
   buildTypes {
@@ -107,6 +119,16 @@ dependencies {
   // Google Maps for Compose
   implementation("com.google.maps.android:maps-compose:4.3.0")
   implementation("com.google.android.gms:play-services-maps:18.2.0")
+  
+  // Vosk - Offline Speech Recognition (Wake Word Detection)
+  // Free, open source, no device limits
+  implementation("com.alphacephei:vosk-android:0.3.47")
+  
+  // Google Cloud SDKs (commented out - protobuf conflict, will add later)
+  // implementation("com.google.cloud:google-cloud-speech:4.28.0")
+  // implementation("io.grpc:grpc-okhttp:1.60.0")
+  // implementation("io.grpc:grpc-stub:1.60.0")
+  // implementation("com.google.cloud:google-cloud-translate:2.33.0")
   
   androidTestImplementation(libs.androidx.ui.test.junit4)
   androidTestImplementation(libs.androidx.test.uiautomator)

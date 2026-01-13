@@ -72,12 +72,9 @@ class StreamViewModel(
   private val _uiState = MutableStateFlow(INITIAL_STATE)
   val uiState: StateFlow<StreamUiState> = _uiState.asStateFlow()
 
-  private val streamTimer = StreamTimer()
-
   private var videoJob: Job? = null
   private var audioJob: Job? = null // DAT audio collection job
   private var stateJob: Job? = null
-  private var timerJob: Job? = null
   private var isRestarting = false // Flag to prevent navigation during intentional restart
   
   /** Set to true to completely disable auto-navigation (for test screens) */
@@ -112,29 +109,6 @@ class StreamViewModel(
   }
 
   init {
-    // Collect timer state
-    timerJob =
-        viewModelScope.launch {
-          launch {
-            streamTimer.timerMode.collect { mode -> _uiState.update { it.copy(timerMode = mode) } }
-          }
-
-          launch {
-            streamTimer.remainingTimeSeconds.collect { seconds ->
-              _uiState.update { it.copy(remainingTimeSeconds = seconds) }
-            }
-          }
-
-          launch {
-            streamTimer.isTimerExpired.collect { expired ->
-              if (expired) {
-                // Stop streaming and navigate back
-                stopStream()
-                wearablesViewModel.navigateToDeviceSelection()
-              }
-            }
-          }
-        }
     
     // Monitor device connection - stop streaming if device disconnects (e.g., glasses in case)
     viewModelScope.launch {
@@ -185,15 +159,15 @@ class StreamViewModel(
     
     // Reset UI state for new stream
     _uiState.update { it.copy(streamStartTime = 0L, streamSessionState = StreamSessionState.STOPPED) }
-    
-    resetTimer()
-    streamTimer.startTimer()
-    
+        
     // Start new session immediately (no delay)
+    // IMPORTANT: Create NEW AutoDeviceSelector each time to ensure clean SDK state
+    // Reusing the same selector causes second capture to fail (STARTED but not STREAMING)
+    val freshDeviceSelector = com.meta.wearable.dat.core.selectors.AutoDeviceSelector()
     val streamSession =
         Wearables.startStreamSession(
                 getApplication(),
-                deviceSelector,
+                freshDeviceSelector,
                 StreamConfiguration(videoQuality = quality, fps),
             )
             .also { this.streamSession = it }
@@ -231,17 +205,13 @@ class StreamViewModel(
             when (currentState) {
               StreamSessionState.STARTING -> {
                 Log.d(TAG, "⏳ Session starting...")
-                // Start timeout job - if we stay in STARTING for 5 seconds, reset and retry
+                // Start timeout job - if we stay in STARTING for 5 seconds, just log warning
+                // Don't auto-restart as it causes loops when Stop button is pressed
                 startingTimeoutJob = viewModelScope.launch {
                   kotlinx.coroutines.delay(5000)
-                  Log.w(TAG, "⚠️ STARTING timeout - doing full reset before retry")
+                  Log.w(TAG, "⚠️ STARTING timeout - session stuck in STARTING state")
+                  // Just update UI state, don't auto-restart
                   _uiState.update { it.copy(streamSessionState = StreamSessionState.STOPPED) }
-                  // Full reset
-                  stopStream()
-                  // Wait for SDK to fully cleanup
-                  kotlinx.coroutines.delay(1000)
-                  Log.d(TAG, "🔄 Retrying stream start after reset")
-                  startStreamWithState(currentTargetState)
                 }
               }
               StreamSessionState.STARTED -> Log.d(TAG, "✓ Session started, waiting for stream...")
@@ -278,6 +248,9 @@ class StreamViewModel(
             }
           }
         }
+    // Note: StreamSession.errors is not available in current DAT SDK
+    // StreamError (STREAM_ERROR, HINGE_CLOSED, PERMISSIONS_DENIED) can only be detected 
+    // via STOPPED state transitions or exception handling
   }
   
   /**
@@ -305,31 +278,46 @@ class StreamViewModel(
       Log.d(TAG, "State switch: stopping current stream first")
       stopStream()
       
-      // Launch new session with small delay to ensure SDK cleanup completes
+      // Launch new session with DeviceSession refresh
       viewModelScope.launch {
-        // Wait for SDK to fully close previous session
-        kotlinx.coroutines.delay(300)
-        Log.d(TAG, "State switch: starting new stream after SDK cleanup")
+        // Refresh DeviceSession (stop + start) before new stream
+        Log.d(TAG, "State switch: refreshing DeviceSession")
+        wearablesViewModel.refreshSession()
+        kotlinx.coroutines.delay(1000)  // Wait for DeviceSession to restart
+        
+        Log.d(TAG, "State switch: starting new stream")
         startStreamWithState(newState)
         Log.d(TAG, "State switch completed in ${System.currentTimeMillis() - switchStartTime}ms")
       }
     } else {
-      // Starting video from audio-only state (no previous stream to close)
-      startStreamWithState(newState)
+      // Starting video from audio-only state (previous was stopped, need refresh)
+      viewModelScope.launch {
+        if (streamSession != null || uiState.value.streamStartTime > 0) {
+          Log.d(TAG, "Previous session detected, refreshing DeviceSession")
+          wearablesViewModel.refreshSession()
+          kotlinx.coroutines.delay(1000)
+        }
+        startStreamWithState(newState)
+      }
     }
   }
 
   fun stopStream() {
+    // IMPORTANT: Cancel jobs BEFORE closing session to prevent collectors
+    // from running on a closed session (causes SDK state issues on restart)
     videoJob?.cancel()
     videoJob = null
     audioJob?.cancel()
     audioJob = null
     stateJob?.cancel()
     stateJob = null
+    
     streamSession?.close()
     streamSession = null
-    streamTimer.stopTimer()
-    // Preserve capturedPhoto when stopping stream
+    
+    // Stop DeviceSession completely (will be restarted on next capture)
+    wearablesViewModel.stopDeviceSession()
+    
     val currentPhoto = _uiState.value.capturedPhoto
     _uiState.update { INITIAL_STATE.copy(capturedPhoto = currentPhoto) }
   }
@@ -384,18 +372,26 @@ class StreamViewModel(
     _uiState.update { it.copy(isCapturing = true, micToCaptureTime = 0L) }
     
     viewModelScope.launch {
+      // Step 0: Only refresh DeviceSession if there was a previous stream (not fresh app start)
+      if (streamSession != null || uiState.value.streamStartTime > 0) {
+        Log.d(TAG, "Previous session detected, refreshing DeviceSession")
+        wearablesViewModel.refreshSession()
+        kotlinx.coroutines.delay(1000)  // Wait for DeviceSession to fully restart
+      }
+      
       // Step 1: Switch to capture quality mode
       isRestarting = true
-      stopStream()
+      
       startStreamWithState(captureQuality)
-      isRestarting = false
       
       // Step 2: Wait for stream to be ready (wait for first frame)
       var waitCount = 0
-      while (uiState.value.streamSessionState != StreamSessionState.STREAMING && waitCount < 50) {
+      while (uiState.value.streamSessionState != StreamSessionState.STREAMING && waitCount < 80) {
         kotlinx.coroutines.delay(100)
         waitCount++
       }
+      
+      isRestarting = false  // Reset after checking STREAMING state
       
       if (uiState.value.streamSessionState != StreamSessionState.STREAMING) {
         Log.e(TAG, "Failed to start stream for capture")
@@ -428,6 +424,7 @@ class StreamViewModel(
                 Log.d(TAG, "Returning to audio-only mode: ${originalState.name}")
                 isRestarting = true
                 stopStream()
+                kotlinx.coroutines.delay(2000)  // SDK cleanup time
                 _uiState.update { it.copy(currentStreamState = originalState) }
                 isRestarting = false
               }
@@ -435,6 +432,7 @@ class StreamViewModel(
               // Original was OFF - just stop everything
               Log.d(TAG, "Original was OFF, stopping stream")
               stopStream()
+              kotlinx.coroutines.delay(2000)  // SDK cleanup time before next capture
             }
             
             val elapsed = System.currentTimeMillis() - workflowStartTime
@@ -445,6 +443,70 @@ class StreamViewModel(
             Log.e(TAG, "Photo capture failed")
             val elapsed = System.currentTimeMillis() - workflowStartTime
             _uiState.update { it.copy(isCapturing = false, photoCaptureTime = -1L, micToCaptureTime = -elapsed) }
+          }
+    }
+  }
+
+  /**
+   * Continuous Capture - capture photo without closing session
+   * For rapid successive captures without hardware cooldown
+   */
+  fun continuousCapture() {
+    if (uiState.value.isCapturing) {
+      Log.d(TAG, "Capture already in progress, ignoring request")
+      return
+    }
+    
+    // If not streaming, start it first
+    if (uiState.value.streamSessionState != StreamSessionState.STREAMING) {
+      Log.d(TAG, "Starting stream for continuous capture")
+      
+      viewModelScope.launch {
+        // Only refresh DeviceSession if there was a previous stream (not fresh app start)
+        if (streamSession != null || uiState.value.streamStartTime > 0) {
+          Log.d(TAG, "Previous session detected, refreshing DeviceSession")
+          wearablesViewModel.refreshSession()
+          kotlinx.coroutines.delay(1000)  // Wait for DeviceSession to restart
+        }
+        
+        startStreamWithState(StreamState.STANDBY)
+        
+        // Wait for STREAMING state
+        var waitCount = 0
+        while (uiState.value.streamSessionState != StreamSessionState.STREAMING && waitCount < 50) {
+          kotlinx.coroutines.delay(100)
+          waitCount++
+        }
+        
+        if (uiState.value.streamSessionState == StreamSessionState.STREAMING) {
+          kotlinx.coroutines.delay(1000) // First frame stabilization
+          performContinuousCapture()
+        } else {
+          Log.e(TAG, "Failed to start stream for continuous capture")
+        }
+      }
+    } else {
+      // Already streaming - capture immediately
+      performContinuousCapture()
+    }
+  }
+  
+  private fun performContinuousCapture() {
+    Log.d(TAG, "📸 Continuous capture (session stays open)")
+    val captureStartTime = System.currentTimeMillis()
+    _uiState.update { it.copy(isCapturing = true, photoCaptureTime = 0L) }
+    
+    viewModelScope.launch {
+      streamSession?.capturePhoto()
+          ?.onSuccess { photoData ->
+            val elapsed = System.currentTimeMillis() - captureStartTime
+            Log.d(TAG, "📸 Continuous capture successful in ${elapsed}ms")
+            handlePhotoData(photoData)
+            _uiState.update { it.copy(isCapturing = false, photoCaptureTime = elapsed) }
+          }
+          ?.onFailure {
+            Log.e(TAG, "Continuous capture failed")
+            _uiState.update { it.copy(isCapturing = false, photoCaptureTime = -1L) }
           }
     }
   }
@@ -482,16 +544,7 @@ class StreamViewModel(
     }
   }
 
-  fun cycleTimerMode() {
-    streamTimer.cycleTimerMode()
-    if (_uiState.value.streamSessionState == StreamSessionState.STREAMING) {
-      streamTimer.startTimer()
-    }
-  }
 
-  fun resetTimer() {
-    streamTimer.resetTimer()
-  }
 
   private fun handleVideoFrame(videoFrame: VideoFrame) {
     // VideoFrame contains raw I420 video data in a ByteBuffer
@@ -639,8 +692,6 @@ class StreamViewModel(
     super.onCleared()
     stopStream()
     stateJob?.cancel()
-    timerJob?.cancel()
-    streamTimer.cleanup()
   }
 
   class Factory(

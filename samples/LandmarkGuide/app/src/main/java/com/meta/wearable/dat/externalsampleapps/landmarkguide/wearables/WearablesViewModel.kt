@@ -22,6 +22,8 @@ import androidx.lifecycle.viewModelScope
 import com.meta.wearable.dat.core.Wearables
 import com.meta.wearable.dat.core.selectors.AutoDeviceSelector
 import com.meta.wearable.dat.core.selectors.DeviceSelector
+import com.meta.wearable.dat.core.session.DeviceSession
+import com.meta.wearable.dat.core.session.DeviceSessionState
 import com.meta.wearable.dat.core.types.DeviceIdentifier
 import com.meta.wearable.dat.core.types.Permission
 import com.meta.wearable.dat.core.types.PermissionStatus
@@ -34,10 +36,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.meta.wearable.dat.externalsampleapps.landmarkguide.bluetooth.BluetoothBatteryService
 
 class WearablesViewModel(application: Application) : AndroidViewModel(application) {
   companion object {
     private const val TAG = "WearablesViewModel"
+  }
+
+  init {
+    android.util.Log.e(TAG, "🆕 WearablesViewModel created!")
   }
 
   private val _uiState = MutableStateFlow(WearablesUiState())
@@ -47,19 +54,77 @@ class WearablesViewModel(application: Application) : AndroidViewModel(applicatio
   val deviceSelector: DeviceSelector = AutoDeviceSelector()
   private var deviceSelectorJob: Job? = null
 
+  // Device Session for monitoring device connection state
+  private val deviceSession = DeviceSession(deviceSelector)
+  val deviceSessionState: StateFlow<DeviceSessionState> = deviceSession.state
+
+  // Bluetooth Battery Service
+  private val bluetoothBatteryService = BluetoothBatteryService(application.applicationContext)
+  val batteryLevel: StateFlow<Int?> = bluetoothBatteryService.batteryLevel
+  
+  fun refreshBattery() {
+    bluetoothBatteryService.refreshBattery()
+  }
+  
+  /**
+   * Manually refresh device session - call this when user taps Active/Session box
+   * This restarts the DeviceSession to pick up new connection state
+   */
+  fun refreshSession() {
+    android.util.Log.e(TAG, "🔄 Manual session refresh requested")
+    deviceSession.stop()
+    deviceSession.start()
+    android.util.Log.e(TAG, "🔄 DeviceSession restarted")
+  }
+  
+  /**
+   * Stop DeviceSession completely (no restart)
+   * Call this when user presses Stop button
+   */
+  fun stopDeviceSession() {
+    android.util.Log.e(TAG, "⏹️ Stopping DeviceSession completely")
+    deviceSession.stop()
+  }
+
   private var monitoringStarted = false
   private val deviceMonitoringJobs = mutableMapOf<DeviceIdentifier, Job>()
 
   fun startMonitoring() {
     if (monitoringStarted) {
+      android.util.Log.e(TAG, "🟡 startMonitoring() already started, skipping")
       return
     }
     monitoringStarted = true
+    android.util.Log.e(TAG, "🟢 startMonitoring() called - starting device monitoring")
+
+    // Start Bluetooth battery monitoring
+    bluetoothBatteryService.start()
+    
+    // Start device session to monitor connection state (STARTED/STOPPED)
+    deviceSession.start()
+    android.util.Log.e(TAG, "🔗 DeviceSession.start() called")
+    
+    // Poll device session state every 5 seconds (just read, don't restart)
+    viewModelScope.launch {
+      while (true) {
+        kotlinx.coroutines.delay(5000)
+        val currentState = deviceSession.state.value
+        android.util.Log.d(TAG, "🔄 DeviceSessionState poll: $currentState")
+      }
+    }
+    
+    // Monitor device session state changes and log them
+    viewModelScope.launch {
+      deviceSession.state.collect { state ->
+        android.util.Log.e(TAG, "📡 DeviceSessionState changed: $state")
+      }
+    }
 
     // Monitor device selector for active device
     deviceSelectorJob =
         viewModelScope.launch {
           deviceSelector.activeDevice(Wearables.devices).collect { device ->
+            android.util.Log.e(TAG, "📱 Active device changed: ${device != null}")
             _uiState.update { it.copy(hasActiveDevice = device != null) }
           }
         }
@@ -195,5 +260,9 @@ class WearablesViewModel(application: Application) : AndroidViewModel(applicatio
     deviceMonitoringJobs.values.forEach { it.cancel() }
     deviceMonitoringJobs.clear()
     deviceSelectorJob?.cancel()
+    
+    // Stop device session and Bluetooth battery service
+    deviceSession.stop()
+    bluetoothBatteryService.stop()
   }
 }
