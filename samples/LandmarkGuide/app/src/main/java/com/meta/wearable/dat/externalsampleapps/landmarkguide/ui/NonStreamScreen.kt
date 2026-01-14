@@ -261,6 +261,15 @@ fun NonStreamScreen(
             onClick = { viewModel.showLiveTranslation() },
             enabled = true,  // Always enabled for testing
         )
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        // Majlis Button
+        SwitchButton(
+            label = "🕌 Majlis",
+            onClick = { viewModel.showMajlis() },
+            enabled = true,
+        )
       }
 
       // Getting Started Sheet

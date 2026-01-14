@@ -100,18 +100,10 @@ class WearablesViewModel(application: Application) : AndroidViewModel(applicatio
     // Start Bluetooth battery monitoring
     bluetoothBatteryService.start()
     
-    // Start device session to monitor connection state (STARTED/STOPPED)
-    deviceSession.start()
-    android.util.Log.e(TAG, "🔗 DeviceSession.start() called")
-    
-    // Poll device session state every 5 seconds (just read, don't restart)
-    viewModelScope.launch {
-      while (true) {
-        kotlinx.coroutines.delay(5000)
-        val currentState = deviceSession.state.value
-        android.util.Log.d(TAG, "🔄 DeviceSessionState poll: $currentState")
-      }
-    }
+    // NOTE: deviceSession.start() is NOT called automatically anymore
+    // User must explicitly start the glasses session when needed
+    // This prevents "Experience Started" from triggering on app launch
+    android.util.Log.e(TAG, "⏸️ DeviceSession NOT auto-started (manual trigger only)")
     
     // Monitor device session state changes and log them
     viewModelScope.launch {
@@ -262,6 +254,276 @@ class WearablesViewModel(application: Application) : AndroidViewModel(applicatio
     _uiState.update { it.copy(isLiveTranslationVisible = false) }
   }
 
+  fun showMajlis() {
+    _uiState.update { it.copy(isMajlisVisible = true) }
+  }
+
+  fun hideMajlis() {
+    _uiState.update { it.copy(isMajlisVisible = false) }
+  }
+  
+  // =============================================
+  // GLOBAL WAKE WORD SYSTEM
+  // =============================================
+  
+  private var wakeWordService: com.meta.wearable.dat.externalsampleapps.landmarkguide.voice.PorcupineWakeWordService? = null
+  private var openAIService: com.meta.wearable.dat.externalsampleapps.landmarkguide.translation.OpenAITranslationService? = null
+  
+  /**
+   * Initialize global wake word detection using Picovoice Porcupine.
+   * Call this once at app startup.
+   */
+  fun initializeWakeWord() {
+    val context = getApplication<Application>().applicationContext
+    
+    // Initialize TTS for responses
+    openAIService = com.meta.wearable.dat.externalsampleapps.landmarkguide.translation.OpenAITranslationService(context)
+    
+    // Initialize Porcupine wake word service (accurate, offline)
+    wakeWordService = com.meta.wearable.dat.externalsampleapps.landmarkguide.voice.PorcupineWakeWordService(
+      context = context,
+      onWakeWordDetected = {
+        android.util.Log.d(TAG, "🎤 Wake word detected! Responding with Halla Walla")
+        handleWakeWordDetected()
+      },
+      onStatusChange = { status ->
+        _uiState.update { it.copy(wakeWordStatus = status) }
+      }
+    )
+    
+    // Initialize Porcupine
+    wakeWordService?.initialize()
+  }
+  
+  /**
+   * Start listening for wake word globally.
+   */
+  fun startWakeWordListening() {
+    wakeWordService?.startListening()
+    _uiState.update { it.copy(isWakeWordListening = true) }
+  }
+  
+  /**
+   * Stop wake word listening.
+   */
+  fun stopWakeWordListening() {
+    wakeWordService?.stopListening()
+    _uiState.update { it.copy(isWakeWordListening = false) }
+  }
+  
+  // Voice command STT service (use Deepgram for commands)
+  private var commandSTT: com.meta.wearable.dat.externalsampleapps.landmarkguide.translation.StreamingSpeechService? = null
+  private var commandAudioCapture: com.meta.wearable.dat.externalsampleapps.landmarkguide.audio.BluetoothScoAudioCapture? = null
+  private var commandTimeoutJob: kotlinx.coroutines.Job? = null
+  
+  // Wake word extension phrases (saying these extends the 4-second timeout)
+  private val EXTEND_PHRASES = listOf("halla walla", "hallawalla", "hello", "hey", "wait", "hold on")
+  
+  /**
+   * Handle wake word detection - stop all other tasks, play listening sound, wait for command.
+   */
+  private fun handleWakeWordDetected() {
+    // Stop wake word listening during response
+    wakeWordService?.stopListening()
+    _uiState.update { it.copy(isVoiceCommandMode = true) }
+    
+    // Log for debugging
+    android.util.Log.d(TAG, "🎤 Wake word triggered - entering command mode")
+    
+    viewModelScope.launch {
+      // Play short acknowledgment: "Halla Walla!" (listening sound)
+      openAIService?.speak(
+        text = "Halla Walla!",
+        languageCode = "en",
+        useBluetooth = true
+      )
+      
+      // Small pause to indicate listening
+      kotlinx.coroutines.delay(300)
+      
+      // Start voice command recognition
+      startVoiceCommandRecognition()
+    }
+  }
+  
+  /**
+   * Start listening for voice commands (Conversation Mode / Tour Mode / Generic Mode)
+   * This is EXCLUSIVE - no other STT/translation should run during this time.
+   */
+  private fun startVoiceCommandRecognition() {
+    val context = getApplication<Application>().applicationContext
+    
+    android.util.Log.d(TAG, "🎧 Starting command recognition (4-sec timeout)...")
+    
+    // Initialize Deepgram for command recognition
+    commandSTT = com.meta.wearable.dat.externalsampleapps.landmarkguide.translation.StreamingSpeechService()
+    
+    commandSTT?.onTranscript = { text, isFinal ->
+      if (text.isNotBlank()) {
+        val lowerText = text.lowercase()
+        
+        // Check if user said an extension phrase - reset timeout
+        if (EXTEND_PHRASES.any { lowerText.contains(it) }) {
+          android.util.Log.d(TAG, "🔄 Timeout extended - heard: '$text'")
+          resetCommandTimeout()
+        }
+        
+        if (isFinal) {
+          android.util.Log.d(TAG, "🎯 Voice command: $text")
+          processVoiceCommand(text)
+        }
+      }
+    }
+    
+    commandSTT?.startListening("en")
+    
+    // Start audio capture
+    commandAudioCapture = com.meta.wearable.dat.externalsampleapps.landmarkguide.audio.BluetoothScoAudioCapture(context)
+    commandAudioCapture?.setListener(object : com.meta.wearable.dat.externalsampleapps.landmarkguide.audio.BluetoothScoAudioCapture.AudioCaptureListener {
+      override fun onAudioData(data: ByteArray, size: Int) {
+        commandSTT?.sendAudio(data.copyOf(size))
+      }
+      override fun onScoConnected() {}
+      override fun onScoDisconnected() {}
+      override fun onError(message: String) {}
+    })
+    commandAudioCapture?.startRecording()
+    
+    // Start timeout
+    resetCommandTimeout()
+  }
+  
+  /**
+   * Reset/extend the command timeout to 4 seconds from now.
+   */
+  private fun resetCommandTimeout() {
+    commandTimeoutJob?.cancel()
+    commandTimeoutJob = viewModelScope.launch {
+      kotlinx.coroutines.delay(4000)
+      if (_uiState.value.isVoiceCommandMode) {
+        android.util.Log.d(TAG, "⏱️ Voice command timeout - playing exit sound")
+        
+        // Stop command recognition
+        stopVoiceCommandRecognition()
+        
+        // Play exit beep sound (short "hmm" or similar)
+        openAIService?.speak(
+          text = "Hmm",
+          languageCode = "en",
+          useBluetooth = true
+        )
+        
+        // Small delay then resume wake word listening
+        kotlinx.coroutines.delay(500)
+        wakeWordService?.startListening()
+      }
+    }
+  }
+  
+  /**
+   * Process recognized voice command and switch mode.
+   */
+  private fun processVoiceCommand(command: String) {
+    val lowerCommand = command.lowercase()
+    android.util.Log.d(TAG, "🎯 Processing command: $lowerCommand")
+    
+    val mode = when {
+      // Conversation Mode variants
+      lowerCommand.contains("conversation") || 
+      lowerCommand.contains("majlis") ||
+      lowerCommand.contains("chat") -> AppMode.CONVERSATION
+      
+      // Tour Mode variants  
+      lowerCommand.contains("tour") ||
+      lowerCommand.contains("guide") ||
+      lowerCommand.contains("travel") -> AppMode.TOUR
+      
+      // Generic Mode variants
+      lowerCommand.contains("generic") ||
+      lowerCommand.contains("normal") ||
+      lowerCommand.contains("home") ||
+      lowerCommand.contains("main") -> AppMode.GENERIC
+      
+      else -> null
+    }
+    
+    if (mode != null) {
+      // Stop voice command listening
+      stopVoiceCommandRecognition()
+      
+      // Switch mode
+      switchMode(mode)
+      
+      // Announce mode change
+      viewModelScope.launch {
+        val modeName = when (mode) {
+          AppMode.CONVERSATION -> "Conversation Mode activated"
+          AppMode.TOUR -> "Tour Mode activated"
+          AppMode.GENERIC -> "Generic Mode activated"
+        }
+        openAIService?.speak(modeName, "en", useBluetooth = true)
+        
+        // Resume wake word listening after announcement
+        kotlinx.coroutines.delay(500)
+        wakeWordService?.startListening()
+      }
+    }
+  }
+  
+  /**
+   * Stop voice command recognition.
+   */
+  private fun stopVoiceCommandRecognition() {
+    commandSTT?.stopListening()
+    commandSTT = null
+    commandAudioCapture?.stop()
+    commandAudioCapture = null
+    _uiState.update { it.copy(isVoiceCommandMode = false) }
+  }
+  
+  /**
+   * Switch app mode via voice command.
+   */
+  fun switchMode(mode: AppMode) {
+    _uiState.update { it.copy(currentMode = mode) }
+    
+    // Close all mode screens first
+    _uiState.update { 
+      it.copy(
+        isMajlisVisible = false, 
+        isTourModeVisible = false, 
+        isGenericModeVisible = false,
+        isLiveTranslationVisible = false
+      ) 
+    }
+    
+    // Navigate to appropriate screen
+    when (mode) {
+      AppMode.CONVERSATION -> {
+        // Show Majlis for conversation mode
+        _uiState.update { it.copy(isMajlisVisible = true) }
+      }
+      AppMode.TOUR -> {
+        // Tour mode - show tour guide screen
+        _uiState.update { it.copy(isTourModeVisible = true) }
+      }
+      AppMode.GENERIC -> {
+        // Generic mode - show generic AI screen
+        _uiState.update { it.copy(isGenericModeVisible = true) }
+      }
+    }
+    
+    android.util.Log.d(TAG, "🔄 Mode switched to: $mode")
+  }
+  
+  fun hideTourMode() {
+    _uiState.update { it.copy(isTourModeVisible = false) }
+  }
+  
+  fun hideGenericMode() {
+    _uiState.update { it.copy(isGenericModeVisible = false) }
+  }
+
   override fun onCleared() {
     super.onCleared()
     // Cancel all device monitoring jobs when ViewModel is cleared
@@ -272,5 +534,10 @@ class WearablesViewModel(application: Application) : AndroidViewModel(applicatio
     // Stop device session and Bluetooth battery service
     deviceSession.stop()
     bluetoothBatteryService.stop()
+    
+    // Cleanup wake word service
+    wakeWordService?.destroy()
+    wakeWordService = null
   }
 }
+

@@ -70,6 +70,7 @@ import com.meta.wearable.dat.externalsampleapps.landmarkguide.wearables.Wearable
 fun CameraAccessScaffold(
     viewModel: WearablesViewModel,
     onRequestWearablesPermission: suspend (Permission) -> PermissionStatus,
+    deepLinkRoomId: String? = null,
     modifier: Modifier = Modifier,
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -83,14 +84,39 @@ fun CameraAccessScaffold(
       viewModel.clearCameraPermissionError()
     }
   }
+  
+  // Auto-open Majlis when deep link is present
+  LaunchedEffect(deepLinkRoomId) {
+    if (deepLinkRoomId != null) {
+      android.util.Log.d("CameraAccessScaffold", "🔗 Deep link detected, auto-showing Majlis")
+      viewModel.showMajlis()
+    }
+  }
 
   Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
     Box(modifier = Modifier.fillMaxSize()) {
       when {
-        // Live Translation screen (highest priority)
+        // Tour Mode screen
+        uiState.isTourModeVisible ->
+            TourModeScreen(
+                onBack = { viewModel.hideTourMode() },
+            )
+        // Generic Mode screen
+        uiState.isGenericModeVisible ->
+            GenericModeScreen(
+                onBack = { viewModel.hideGenericMode() },
+            )
+        // Live Translation screen
         uiState.isLiveTranslationVisible ->
             LiveTranslationScreen(
                 onBack = { viewModel.hideLiveTranslation() },
+            )
+        // Majlis multi-user translation (Conversation Mode)
+        uiState.isMajlisVisible ->
+            MajlisScreen(
+                onBack = { viewModel.hideMajlis() },
+                isVoiceCommandMode = uiState.isVoiceCommandMode,
+                deepLinkRoomId = deepLinkRoomId
             )
         // Independent test screen
         uiState.isResolutionTestVisible ->

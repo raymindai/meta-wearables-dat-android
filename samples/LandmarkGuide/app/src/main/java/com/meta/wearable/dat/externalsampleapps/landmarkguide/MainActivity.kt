@@ -39,8 +39,17 @@ import kotlinx.coroutines.sync.withLock
 
 class MainActivity : ComponentActivity() {
   companion object {
-    // Required Android permissions for the DAT SDK to function properly
-    val PERMISSIONS: Array<String> = arrayOf(BLUETOOTH, BLUETOOTH_CONNECT, INTERNET)
+    // Required Android permissions for the DAT SDK and Nearby Connections
+    val PERMISSIONS: Array<String> = arrayOf(
+      BLUETOOTH, 
+      BLUETOOTH_CONNECT, 
+      INTERNET,
+      android.Manifest.permission.ACCESS_FINE_LOCATION,
+      android.Manifest.permission.ACCESS_COARSE_LOCATION,
+      android.Manifest.permission.NEARBY_WIFI_DEVICES,
+      android.Manifest.permission.BLUETOOTH_ADVERTISE,
+      android.Manifest.permission.BLUETOOTH_SCAN
+    )
   }
 
   val viewModel: WearablesViewModel by viewModels()
@@ -71,6 +80,17 @@ class MainActivity : ComponentActivity() {
     super.onCreate(savedInstanceState)
     enableEdgeToEdge()
 
+    // Parse deep link if present: landmarkguide://room/{roomId}
+    val deepLinkRoomId = intent?.data?.let { uri ->
+      if (uri.scheme == "landmarkguide" && uri.host == "room") {
+        uri.pathSegments?.firstOrNull()
+      } else null
+    }
+    
+    if (deepLinkRoomId != null) {
+      android.util.Log.d("MainActivity", "📱 Deep link received: room=$deepLinkRoomId")
+    }
+
     // First, ensure the app has necessary Android permissions
     checkPermissions {
       // Initialize the DAT SDK once the permissions are granted
@@ -79,12 +99,17 @@ class MainActivity : ComponentActivity() {
 
       // Start observing Wearables state after SDK is initialized
       viewModel.startMonitoring()
+      
+      // Initialize global wake word detection ("Hey Humain" → "Halla Walla!")
+      viewModel.initializeWakeWord()
+      viewModel.startWakeWordListening()
     }
 
     setContent {
       CameraAccessScaffold(
           viewModel = viewModel,
           onRequestWearablesPermission = ::requestWearablesPermission,
+          deepLinkRoomId = deepLinkRoomId
       )
     }
   }

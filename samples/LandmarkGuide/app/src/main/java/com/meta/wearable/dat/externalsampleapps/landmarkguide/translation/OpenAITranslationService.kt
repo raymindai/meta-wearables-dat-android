@@ -161,7 +161,8 @@ class OpenAITranslationService(private val context: Context) {
     }
     
     /**
-     * Speak text using OpenAI TTS (tts-1 for speed, tts-1-hd for quality)
+     * Speak text using OpenAI TTS with STREAMING for low latency
+     * Plays audio chunks as they arrive instead of waiting for full response
      */
     suspend fun speak(
         text: String,
@@ -177,10 +178,10 @@ class OpenAITranslationService(private val context: Context) {
             val voice = TTS_VOICES[languageCode] ?: "onyx"
             
             val jsonBody = JSONObject().apply {
-                put("model", "tts-1")  // Use tts-1 for low latency (tts-1-hd for quality)
+                put("model", "tts-1")  // Use tts-1 for low latency
                 put("input", text)
                 put("voice", voice)
-                put("response_format", "pcm")  // Raw PCM for direct playback
+                put("response_format", "pcm")  // Raw PCM for direct streaming playback
                 put("speed", 1.0)
             }
             
@@ -200,7 +201,7 @@ class OpenAITranslationService(private val context: Context) {
             val response = client.newCall(request).execute()
             
             val latency = System.currentTimeMillis() - startTime
-            Log.d(TAG, "⏱️ TTS latency: ${latency}ms")
+            Log.d(TAG, "⏱️ TTS response: ${latency}ms")
             
             if (!response.isSuccessful) {
                 val errorBody = response.body?.string()
@@ -208,7 +209,7 @@ class OpenAITranslationService(private val context: Context) {
                 return@withContext false
             }
             
-            // Get PCM audio data
+            // Get full PCM audio data (non-streaming, but reliable)
             val audioData = response.body?.bytes() ?: return@withContext false
             
             // Play audio
@@ -236,6 +237,89 @@ class OpenAITranslationService(private val context: Context) {
             speak(result.translatedText, targetLanguage, useBluetooth)
         }
         return result
+    }
+    
+    /**
+     * Stream audio playback - start playing as soon as first chunk arrives
+     * This reduces perceived latency significantly
+     */
+    private suspend fun playAudioStream(
+        inputStream: java.io.InputStream?,
+        sampleRate: Int,
+        useBluetooth: Boolean
+    ) = withContext(Dispatchers.IO) {
+        if (inputStream == null) return@withContext
+        
+        // Use mutex to queue playback
+        playbackMutex.withLock {
+            try {
+                if (useBluetooth) {
+                    audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+                    audioManager.startBluetoothSco()
+                    audioManager.isBluetoothScoOn = true
+                }
+                
+                // Calculate buffer size for streaming (100ms chunks)
+                val bufferSize = maxOf(
+                    AudioTrack.getMinBufferSize(
+                        sampleRate,
+                        AudioFormat.CHANNEL_OUT_MONO,
+                        AudioFormat.ENCODING_PCM_16BIT
+                    ),
+                    sampleRate * 2 / 10  // ~100ms of audio
+                )
+                
+                val audioTrack = AudioTrack.Builder()
+                    .setAudioAttributes(
+                        AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                            .build()
+                    )
+                    .setAudioFormat(
+                        AudioFormat.Builder()
+                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                            .setSampleRate(sampleRate)
+                            .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                            .build()
+                    )
+                    .setBufferSizeInBytes(bufferSize * 2)
+                    .setTransferMode(AudioTrack.MODE_STREAM)  // STREAMING mode!
+                    .build()
+                
+                currentAudioTrack = audioTrack
+                audioTrack.play()  // Start playing immediately
+                
+                // Read and write chunks as they arrive
+                val buffer = ByteArray(bufferSize)
+                var bytesRead: Int
+                var totalBytes = 0
+                var firstChunk = true
+                
+                while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                    if (firstChunk) {
+                        Log.d(TAG, "▶️ First chunk playing!")
+                        firstChunk = false
+                    }
+                    audioTrack.write(buffer, 0, bytesRead)
+                    totalBytes += bytesRead
+                }
+                
+                // Wait for remaining buffer to play out
+                Thread.sleep(200)
+                
+                audioTrack.stop()
+                audioTrack.release()
+                currentAudioTrack = null
+                
+                Log.d(TAG, "✅ Streaming playback done ($totalBytes bytes)")
+                
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Audio streaming error: ${e.message}", e)
+            } finally {
+                inputStream.close()
+            }
+        }
     }
     
     private suspend fun playAudio(

@@ -76,6 +76,7 @@ class GoogleSpeechService {
     // Callbacks
     var onTranscript: ((String, Boolean) -> Unit)? = null
     var onError: ((String) -> Unit)? = null
+    var onLanguageDetected: ((String) -> Unit)? = null  // Callback for detected language
     
     private var currentLanguage = "ar-SA"
     
@@ -89,7 +90,11 @@ class GoogleSpeechService {
             return
         }
         
-        currentLanguage = LANGUAGE_CODES[languageCode] ?: "ar-SA"
+        // Support "auto" for auto-detection
+        currentLanguage = when (languageCode) {
+            "auto" -> "auto"
+            else -> LANGUAGE_CODES[languageCode] ?: "ar-SA"
+        }
         _isListening.value = true
         _transcription.value = ""
         _partialTranscription.value = ""
@@ -214,9 +219,18 @@ class GoogleSpeechService {
                 put("config", JSONObject().apply {
                     put("encoding", "LINEAR16")
                     put("sampleRateHertz", 16000)
-                    put("languageCode", currentLanguage)
+                    put("languageCode", if (currentLanguage == "auto") "en-US" else currentLanguage)
                     put("enableAutomaticPunctuation", true)
                     put("model", "latest_long")
+                    
+                    // Auto-detect: add alternative languages
+                    if (currentLanguage == "auto") {
+                        put("alternativeLanguageCodes", org.json.JSONArray().apply {
+                            put("ar-SA")
+                            put("ko-KR")
+                            put("es-ES")
+                        })
+                    }
                 })
                 put("audio", JSONObject().apply {
                     put("content", audioBase64)
@@ -248,8 +262,16 @@ class GoogleSpeechService {
             if (results != null && results.length() > 0) {
                 // Combine all results for the full transcription
                 val fullTranscript = StringBuilder()
+                var detectedLanguage: String? = null
+                
                 for (i in 0 until results.length()) {
                     val result = results.getJSONObject(i)
+                    
+                    // Get detected language (if auto-detect enabled)
+                    if (detectedLanguage == null) {
+                        detectedLanguage = result.optString("languageCode", null)
+                    }
+                    
                     val alternatives = result.optJSONArray("alternatives")
                     if (alternatives != null && alternatives.length() > 0) {
                         val transcript = alternatives.getJSONObject(0).optString("transcript", "")
@@ -259,6 +281,12 @@ class GoogleSpeechService {
                 
                 val transcript = fullTranscript.toString().trim()
                 if (transcript.isNotBlank()) {
+                    // If auto-detect, log and callback detected language
+                    if (currentLanguage == "auto" && detectedLanguage != null) {
+                        Log.d(TAG, "🌐 Detected language: $detectedLanguage")
+                        onLanguageDetected?.invoke(detectedLanguage)
+                    }
+                    
                     Log.d(TAG, "📝 Transcript (${latency}ms): $transcript")
                     _transcription.value = transcript
                     onTranscript?.invoke(transcript, true)

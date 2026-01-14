@@ -12,6 +12,7 @@ plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.jetbrains.kotlin.android)
   alias(libs.plugins.compose.compiler)
+  id("com.google.gms.google-services")
 }
 
 // Load Gemini API key from local.properties
@@ -148,9 +149,26 @@ dependencies {
   implementation("com.google.maps.android:maps-compose:4.3.0")
   implementation("com.google.android.gms:play-services-maps:18.2.0")
   
+  // Google Nearby Connections - for Multi-user Majlis P2P (backup/offline)
+  implementation("com.google.android.gms:play-services-nearby:19.3.0")
+  
+  // Firebase - for instant real-time connection
+  implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+  implementation("com.google.firebase:firebase-database-ktx")
+  
+  // QR Code generation (ZXing) and scanning (ML Kit)
+  implementation("com.google.zxing:core:3.5.3")
+  implementation("com.google.mlkit:barcode-scanning:17.2.0")
+  
   // Vosk - Offline Speech Recognition (Wake Word Detection)
   // Free, open source, no device limits
   implementation("com.alphacephei:vosk-android:0.3.47")
+  
+  // ONNX Runtime - for OpenWakeWord models
+  implementation("com.microsoft.onnxruntime:onnxruntime-android:1.16.3")
+  
+  // Picovoice Porcupine - Wake Word Detection (accurate, offline)
+  implementation("ai.picovoice:porcupine-android:3.0.2")
   
   // Google Cloud SDKs (commented out - protobuf conflict, will add later)
   // implementation("com.google.cloud:google-cloud-speech:4.28.0")

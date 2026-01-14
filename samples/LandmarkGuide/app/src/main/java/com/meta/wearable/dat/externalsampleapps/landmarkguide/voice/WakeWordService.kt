@@ -43,10 +43,19 @@ class WakeWordService(
         private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
         
         // Wake word phrases to detect (case insensitive)
-        // Multiple variations to improve recognition rate
+        // Multiple variations to improve recognition rate with Vosk
+        // Note: Vosk small models often mishear phonemes, so we use many variants
         private val WAKE_WORDS = listOf(
-            "hey human", "hey humain", "a human", "hey you man",
-            "human", "humans", "hey humans", "he human"
+            // Primary variants
+            "hey human", "hey humain", "hey humane", 
+            // Common mishearings
+            "a human", "hey you man", "hey you men",
+            "human", "humans", "he human", "hey humans",
+            // Phonetic variants
+            "hey you mine", "hey hubbin", "hey humin",
+            "hey humming", "hey hue man", "hey who man",
+            // Short variants (trigger on just "human" heard)
+            "humain", "humin", "hubbin"
         )
     }
 
