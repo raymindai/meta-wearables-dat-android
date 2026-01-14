@@ -87,7 +87,12 @@ fun CameraAccessScaffold(
   Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
     Box(modifier = Modifier.fillMaxSize()) {
       when {
-        // Independent test screen (highest priority, not affected by streaming state)
+        // Live Translation screen (highest priority)
+        uiState.isLiveTranslationVisible ->
+            LiveTranslationScreen(
+                onBack = { viewModel.hideLiveTranslation() },
+            )
+        // Independent test screen
         uiState.isResolutionTestVisible ->
             ResolutionTestScreen(
                 wearablesViewModel = viewModel,

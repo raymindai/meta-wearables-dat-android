@@ -27,6 +27,7 @@ data class WearablesUiState(
     val isGettingStartedSheetVisible: Boolean = false,
     val hasActiveDevice: Boolean = false,
     val isResolutionTestVisible: Boolean = false,
+    val isLiveTranslationVisible: Boolean = false,
 ) {
   val isRegistered: Boolean = registrationState is RegistrationState.Registered || hasMockDevices
 }

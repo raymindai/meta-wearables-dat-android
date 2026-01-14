@@ -41,8 +41,12 @@ import com.meta.wearable.dat.externalsampleapps.landmarkguide.voice.WakeWordServ
 import com.meta.wearable.dat.externalsampleapps.landmarkguide.voice.VoiceCommandProcessor
 import com.meta.wearable.dat.externalsampleapps.landmarkguide.mode.AppModeManager
 import com.meta.wearable.dat.externalsampleapps.landmarkguide.BuildConfig
+import com.meta.wearable.dat.externalsampleapps.landmarkguide.translation.RealTimeTranslator
+import com.meta.wearable.dat.externalsampleapps.landmarkguide.translation.TranslationService
 import android.speech.tts.TextToSpeech
 import java.util.Locale
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 
 /**
  * Test screen for measuring streaming resolution and photo capture performance
@@ -90,6 +94,18 @@ fun ResolutionTestScreen(
     // Wake Word and Voice Command services
     var wakeWordService by remember { mutableStateOf<WakeWordService?>(null) }
     var voiceCommandProcessor by remember { mutableStateOf<VoiceCommandProcessor?>(null) }
+    
+    // Translation state
+    val translator = remember { RealTimeTranslator(context) }
+    val translatorState by translator.state.collectAsStateWithLifecycle()
+    var myLanguage by remember { mutableStateOf(TranslationService.LANG_KOREAN) }
+    var partnerLanguage by remember { mutableStateOf(TranslationService.LANG_ENGLISH) }
+    var myLangDropdownExpanded by remember { mutableStateOf(false) }
+    var partnerLangDropdownExpanded by remember { mutableStateOf(false) }
+    var translationTestText by remember { mutableStateOf("") }
+    val translationScope = rememberCoroutineScope()
+    var isRecordingForTranslation by remember { mutableStateOf(false) }
+    var translationAudioBuffer by remember { mutableStateOf<ByteArray?>(null) }
     
     // Collect device info from DAT SDK
     LaunchedEffect(Unit) {
@@ -181,6 +197,7 @@ fun ResolutionTestScreen(
             .fillMaxSize()
             .background(Color.Black)
             .statusBarsPadding()
+            .verticalScroll(rememberScrollState())
             .padding(12.dp)
     ) {
         // Header with Back button
@@ -655,6 +672,316 @@ fun ResolutionTestScreen(
         
         Spacer(modifier = Modifier.height(8.dp))
         
+        // Translation Section
+        Text("🌐 Translation", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        
+        // Language Selection Row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // My Language
+            Column(modifier = Modifier.weight(1f)) {
+                Text("My Lang", color = Color.Gray, fontSize = 9.sp)
+                Box {
+                    Button(
+                        onClick = { myLangDropdownExpanded = true },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3)),
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(6.dp)
+                    ) {
+                        Text(
+                            when (myLanguage) {
+                                TranslationService.LANG_KOREAN -> "🇰🇷 한국어"
+                                TranslationService.LANG_ARABIC -> "🇸🇦 العربية"
+                                TranslationService.LANG_SPANISH -> "🇪🇸 Español"
+                                else -> "🇺🇸 English"
+                            },
+                            fontSize = 10.sp
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = myLangDropdownExpanded,
+                        onDismissRequest = { myLangDropdownExpanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("🇺🇸 English") },
+                            onClick = {
+                                myLanguage = TranslationService.LANG_ENGLISH
+                                translator.setMyLanguage(myLanguage)
+                                myLangDropdownExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("🇰🇷 한국어") },
+                            onClick = {
+                                myLanguage = TranslationService.LANG_KOREAN
+                                translator.setMyLanguage(myLanguage)
+                                myLangDropdownExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("🇸🇦 العربية") },
+                            onClick = {
+                                myLanguage = TranslationService.LANG_ARABIC
+                                translator.setMyLanguage(myLanguage)
+                                myLangDropdownExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("🇪🇸 Español") },
+                            onClick = {
+                                myLanguage = TranslationService.LANG_SPANISH
+                                translator.setMyLanguage(myLanguage)
+                                myLangDropdownExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+            
+            Text("↔️", color = Color.White, fontSize = 16.sp)
+            
+            // Partner Language
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Partner", color = Color.Gray, fontSize = 9.sp)
+                Box {
+                    Button(
+                        onClick = { partnerLangDropdownExpanded = true },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800)),
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(6.dp)
+                    ) {
+                        Text(
+                            when (partnerLanguage) {
+                                TranslationService.LANG_KOREAN -> "🇰🇷 한국어"
+                                TranslationService.LANG_ARABIC -> "🇸🇦 العربية"
+                                TranslationService.LANG_SPANISH -> "🇪🇸 Español"
+                                else -> "🇺🇸 English"
+                            },
+                            fontSize = 10.sp
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = partnerLangDropdownExpanded,
+                        onDismissRequest = { partnerLangDropdownExpanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("🇺🇸 English") },
+                            onClick = {
+                                partnerLanguage = TranslationService.LANG_ENGLISH
+                                translator.setPartnerLanguage(partnerLanguage)
+                                partnerLangDropdownExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("🇰🇷 한국어") },
+                            onClick = {
+                                partnerLanguage = TranslationService.LANG_KOREAN
+                                translator.setPartnerLanguage(partnerLanguage)
+                                partnerLangDropdownExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("🇸🇦 العربية") },
+                            onClick = {
+                                partnerLanguage = TranslationService.LANG_ARABIC
+                                translator.setPartnerLanguage(partnerLanguage)
+                                partnerLangDropdownExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("🇪🇸 Español") },
+                            onClick = {
+                                partnerLanguage = TranslationService.LANG_SPANISH
+                                translator.setPartnerLanguage(partnerLanguage)
+                                partnerLangDropdownExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+        }
+        
+        // Translation Status
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .background(Color(0xFF1E1E1E))
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(translatorState.status, color = Color.White, fontSize = 10.sp)
+            if (translatorState.isProcessing) {
+                Text("⏳", fontSize = 10.sp)
+            }
+        }
+        
+        // Translation Result
+        if (translatorState.originalText.isNotBlank() || translatorState.translatedText.isNotBlank()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(Color(0xFF2E2E2E))
+                    .padding(8.dp)
+            ) {
+                if (translatorState.originalText.isNotBlank()) {
+                    Text("원문: ${translatorState.originalText}", color = Color.Gray, fontSize = 10.sp)
+                }
+                if (translatorState.translatedText.isNotBlank()) {
+                    Text("번역: ${translatorState.translatedText}", color = Color.Green, fontSize = 11.sp)
+                }
+            }
+        }
+        
+        // Live Translation Buttons
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            // Start/Stop Recording for Live Translation
+            Button(
+                onClick = {
+                    if (!isRecordingForTranslation) {
+                        // Start recording
+                        isRecordingForTranslation = true
+                        log("🎤 녹음 시작 (말하세요, 멈추면 자동 종료)...")
+                        
+                        // Start SCO mic recording for translation with VAD
+                        val audioBuffer = mutableListOf<Byte>()
+                        var lastSpeechTime = System.currentTimeMillis()
+                        var hasSpeechStarted = false
+                        val silenceThreshold = 500  // Volume threshold for speech detection
+                        val silenceTimeoutMs = 1500L  // 1.5 seconds of silence = stop
+                        val maxRecordingMs = 30000L  // Max 30 seconds
+                        
+                        val capture = BluetoothScoAudioCapture(context)
+                        var captureRef: BluetoothScoAudioCapture? = capture
+                        
+                        capture.setListener(object : BluetoothScoAudioCapture.AudioCaptureListener {
+                            override fun onAudioData(data: ByteArray, size: Int) {
+                                if (!isRecordingForTranslation) return
+                                
+                                audioBuffer.addAll(data.take(size))
+                                
+                                // Calculate volume (RMS)
+                                var sum = 0L
+                                for (i in 0 until size step 2) {
+                                    if (i + 1 < size) {
+                                        val sample = (data[i].toInt() and 0xFF) or (data[i + 1].toInt() shl 8)
+                                        sum += sample.toLong() * sample
+                                    }
+                                }
+                                val rms = kotlin.math.sqrt(sum.toDouble() / (size / 2)).toInt()
+                                
+                                // Detect speech
+                                if (rms > silenceThreshold) {
+                                    lastSpeechTime = System.currentTimeMillis()
+                                    if (!hasSpeechStarted) {
+                                        hasSpeechStarted = true
+                                        log("🎤 음성 감지됨...")
+                                    }
+                                }
+                            }
+                            override fun onScoConnected() {
+                                log("🎤 SCO 연결됨, 녹음 시작")
+                                capture.startRecording()
+                            }
+                            override fun onScoDisconnected() {}
+                            override fun onError(message: String) {
+                                log("❌ 녹음 에러: $message")
+                            }
+                        })
+                        capture.startScoConnection()
+                        
+                        // VAD monitoring: stop when silence detected after speech
+                        translationScope.launch {
+                            val startTime = System.currentTimeMillis()
+                            while (isRecordingForTranslation) {
+                                kotlinx.coroutines.delay(100)
+                                val now = System.currentTimeMillis()
+                                
+                                // Stop conditions
+                                val timeSinceLastSpeech = now - lastSpeechTime
+                                val totalTime = now - startTime
+                                
+                                // If speech started and silence for 1.5s, or max time reached
+                                if ((hasSpeechStarted && timeSinceLastSpeech > silenceTimeoutMs) || 
+                                    totalTime > maxRecordingMs) {
+                                    break
+                                }
+                            }
+                            
+                            isRecordingForTranslation = false
+                            captureRef?.stop()
+                            captureRef = null
+                            
+                            val audioData = audioBuffer.toByteArray()
+                            log("🎤 녹음 완료: ${audioData.size} bytes (${audioData.size / 32}ms)")
+                            
+                            if (audioData.size < 3200) {  // Less than 100ms of audio
+                                log("⚠️ 오디오가 너무 짧음")
+                                return@launch
+                            }
+                            
+                            // Process: STT → Translate → TTS
+                            log("🔄 음성 인식 중...")
+                            translator.setMyLanguage(myLanguage)
+                            translator.setPartnerLanguage(partnerLanguage)
+                            translator.processAudio(audioData, 16000, isFromPartner = false)
+                        }
+                    } else {
+                        // Stop recording early
+                        isRecordingForTranslation = false
+                        log("🎤 녹음 중지")
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isRecordingForTranslation) Color.Red else Color(0xFF4CAF50)
+                ),
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(6.dp)
+            ) {
+                Text(if (isRecordingForTranslation) "🔴 녹음중..." else "🎤 Live번역", fontSize = 10.sp)
+            }
+            
+            // Quick Test: Direct text translation + TTS
+            Button(
+                onClick = {
+                    translationScope.launch {
+                        val testText = when (myLanguage) {
+                            TranslationService.LANG_KOREAN -> "안녕하세요, 반갑습니다"
+                            TranslationService.LANG_ARABIC -> "مرحبا، كيف حالك"
+                            else -> "Hello, nice to meet you"
+                        }
+                        log("📝 원문($myLanguage): $testText")
+                        
+                        val result = translator.translateText(testText, toMyLanguage = false)
+                        if (result != null) {
+                            log("🌐 번역($partnerLanguage): ${result.translatedText}")
+                            log("🔊 TTS 재생중...")
+                            val spoke = translator.speak(result.translatedText, partnerLanguage)
+                            log(if (spoke) "✅ TTS 완료" else "❌ TTS 실패")
+                        } else {
+                            log("❌ 번역 실패")
+                        }
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3)),
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(6.dp)
+            ) {
+                Text("📝 Quick Test", fontSize = 10.sp)
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
         // Video Stream Header with Silent Mode toggle
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -920,8 +1247,8 @@ fun ResolutionTestScreen(
         
         Box(
             modifier = Modifier
-                .weight(1f)
                 .fillMaxWidth()
+                .height(200.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .background(Color(0xFF1E1E1E))
                 .padding(8.dp)

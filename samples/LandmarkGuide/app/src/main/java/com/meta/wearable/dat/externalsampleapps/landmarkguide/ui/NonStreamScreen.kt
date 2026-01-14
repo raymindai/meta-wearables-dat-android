@@ -252,6 +252,15 @@ fun NonStreamScreen(
             onClick = { viewModel.showResolutionTest() },
             enabled = uiState.hasActiveDevice,
         )
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        // Live Translation Button
+        SwitchButton(
+            label = "🌐 Live Translation",
+            onClick = { viewModel.showLiveTranslation() },
+            enabled = true,  // Always enabled for testing
+        )
       }
 
       // Getting Started Sheet

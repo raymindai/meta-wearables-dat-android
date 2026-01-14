@@ -100,8 +100,10 @@ class BluetoothScoAudioCapture(private val context: Context) {
     
     /**
      * Start recording from Bluetooth SCO microphone
+     * @param useHandsfree If true, use handsfree mode instead of SCO communication mode
+     * @param gainMultiplier Audio amplification (1.0 = no change, 2.0 = 2x louder)
      */
-    fun startRecording(): Boolean {
+    fun startRecording(useHandsfree: Boolean = true, gainMultiplier: Float = 1.5f): Boolean {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) 
             != PackageManager.PERMISSION_GRANTED) {
             Log.e(TAG, "RECORD_AUDIO permission not granted")
@@ -117,9 +119,15 @@ class BluetoothScoAudioCapture(private val context: Context) {
         }
         
         try {
-            // Use VOICE_COMMUNICATION for SCO input
+            // Use VOICE_RECOGNITION for better quality handsfree, or VOICE_COMMUNICATION for SCO
+            val audioSource = if (useHandsfree) {
+                MediaRecorder.AudioSource.VOICE_RECOGNITION
+            } else {
+                MediaRecorder.AudioSource.VOICE_COMMUNICATION
+            }
+            
             audioRecord = AudioRecord(
-                MediaRecorder.AudioSource.VOICE_COMMUNICATION, // Key for SCO
+                audioSource,
                 SAMPLE_RATE,
                 CHANNEL_CONFIG,
                 AUDIO_FORMAT,
@@ -132,19 +140,29 @@ class BluetoothScoAudioCapture(private val context: Context) {
                 return false
             }
             
-            // Set audio mode for SCO
-            audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+            // Set audio mode for handsfree or SCO
+            audioManager.mode = if (useHandsfree) {
+                AudioManager.MODE_IN_COMMUNICATION  // Still needed for Bluetooth routing
+            } else {
+                AudioManager.MODE_IN_COMMUNICATION
+            }
             
             audioRecord?.startRecording()
-            Log.d(TAG, "Started recording from SCO microphone")
+            Log.d(TAG, "Started recording (handsfree=$useHandsfree, gain=$gainMultiplier)")
             
-            // Start reading audio data
+            // Start reading audio data with gain amplification
             recordingJob = CoroutineScope(Dispatchers.IO).launch {
                 val buffer = ByteArray(bufferSize)
                 while (isActive) {
                     val bytesRead = audioRecord?.read(buffer, 0, buffer.size) ?: 0
                     if (bytesRead > 0) {
-                        listener?.onAudioData(buffer.copyOf(bytesRead), bytesRead)
+                        // Apply gain amplification
+                        val amplifiedBuffer = if (gainMultiplier != 1.0f) {
+                            applyGain(buffer, bytesRead, gainMultiplier)
+                        } else {
+                            buffer.copyOf(bytesRead)
+                        }
+                        listener?.onAudioData(amplifiedBuffer, amplifiedBuffer.size)
                     }
                 }
             }
@@ -197,5 +215,29 @@ class BluetoothScoAudioCapture(private val context: Context) {
      */
     fun isScoConnected(): Boolean {
         return audioManager.isBluetoothScoOn
+    }
+    
+    /**
+     * Apply gain amplification to audio buffer
+     * @param buffer Input PCM 16-bit audio buffer
+     * @param size Number of valid bytes in buffer
+     * @param gain Amplification multiplier (2.0 = 2x louder)
+     */
+    private fun applyGain(buffer: ByteArray, size: Int, gain: Float): ByteArray {
+        val output = ByteArray(size)
+        for (i in 0 until size step 2) {
+            if (i + 1 < size) {
+                // Read 16-bit sample (little-endian)
+                val sample = (buffer[i].toInt() and 0xFF) or (buffer[i + 1].toInt() shl 8)
+                // Convert to signed
+                val signedSample = if (sample > 32767) sample - 65536 else sample
+                // Apply gain with clipping
+                val amplified = (signedSample * gain).toInt().coerceIn(-32768, 32767)
+                // Write back (little-endian)
+                output[i] = (amplified and 0xFF).toByte()
+                output[i + 1] = ((amplified shr 8) and 0xFF).toByte()
+            }
+        }
+        return output
     }
 }

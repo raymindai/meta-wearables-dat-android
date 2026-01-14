@@ -42,6 +42,15 @@ val picovoiceApiKey: String = if (localPropertiesFile.exists()) {
   ""
 }
 
+// Load Google Cloud API key from local.properties
+val googleCloudApiKey: String = if (localPropertiesFile.exists()) {
+  val props = Properties()
+  props.load(localPropertiesFile.inputStream())
+  props.getProperty("GOOGLE_CLOUD_API_KEY", "")
+} else {
+  ""
+}
+
 android {
   namespace = "com.meta.wearable.dat.externalsampleapps.landmarkguide"
   compileSdk = 35
@@ -67,6 +76,25 @@ android {
     
     // Picovoice API Key
     buildConfigField("String", "PICOVOICE_API_KEY", "\"$picovoiceApiKey\"")
+    
+    // Google Cloud API Key (for Speech-to-Text, Translation, TTS)
+    buildConfigField("String", "GOOGLE_CLOUD_API_KEY", "\"$googleCloudApiKey\"")
+    
+    // Deepgram API Key (for Streaming STT)
+    val deepgramApiKey: String = if (localPropertiesFile.exists()) {
+      val props = Properties()
+      props.load(localPropertiesFile.inputStream())
+      props.getProperty("DEEPGRAM_API_KEY", "")
+    } else ""
+    buildConfigField("String", "DEEPGRAM_API_KEY", "\"$deepgramApiKey\"")
+    
+    // OpenAI API Key (for GPT Translation + TTS)
+    val openaiApiKey: String = if (localPropertiesFile.exists()) {
+      val props = Properties()
+      props.load(localPropertiesFile.inputStream())
+      props.getProperty("OPENAI_API_KEY", "")
+    } else ""
+    buildConfigField("String", "OPENAI_API_KEY", "\"$openaiApiKey\"")
   }
 
   buildTypes {

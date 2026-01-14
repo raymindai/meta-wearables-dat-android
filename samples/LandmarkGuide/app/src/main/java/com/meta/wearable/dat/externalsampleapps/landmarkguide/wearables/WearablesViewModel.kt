@@ -254,6 +254,14 @@ class WearablesViewModel(application: Application) : AndroidViewModel(applicatio
     _uiState.update { it.copy(isResolutionTestVisible = false) }
   }
 
+  fun showLiveTranslation() {
+    _uiState.update { it.copy(isLiveTranslationVisible = true) }
+  }
+
+  fun hideLiveTranslation() {
+    _uiState.update { it.copy(isLiveTranslationVisible = false) }
+  }
+
   override fun onCleared() {
     super.onCleared()
     // Cancel all device monitoring jobs when ViewModel is cleared
