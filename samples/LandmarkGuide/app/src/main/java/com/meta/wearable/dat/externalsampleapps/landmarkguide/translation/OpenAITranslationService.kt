@@ -16,6 +16,8 @@ import android.media.AudioTrack
 import android.util.Log
 import com.meta.wearable.dat.externalsampleapps.landmarkguide.BuildConfig
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -63,6 +65,9 @@ class OpenAITranslationService(private val context: Context) {
     
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private var currentAudioTrack: AudioTrack? = null
+    
+    // Mutex for sequential TTS playback (no interruption)
+    private val playbackMutex = Mutex()
     
     /**
      * Translate text using GPT-4o-mini (fastest model)
@@ -238,49 +243,52 @@ class OpenAITranslationService(private val context: Context) {
         sampleRate: Int,
         useBluetooth: Boolean
     ) = withContext(Dispatchers.IO) {
-        try {
-            stop()
-            
-            if (useBluetooth) {
-                audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
-                audioManager.startBluetoothSco()
-                audioManager.isBluetoothScoOn = true
+        // Use mutex to queue playback (wait for previous to finish)
+        playbackMutex.withLock {
+            try {
+                if (useBluetooth) {
+                    audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+                    audioManager.startBluetoothSco()
+                    audioManager.isBluetoothScoOn = true
+                }
+                
+                val audioTrack = AudioTrack.Builder()
+                    .setAudioAttributes(
+                        AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                            .build()
+                    )
+                    .setAudioFormat(
+                        AudioFormat.Builder()
+                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                            .setSampleRate(sampleRate)
+                            .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                            .build()
+                    )
+                    .setBufferSizeInBytes(pcmData.size)
+                    .setTransferMode(AudioTrack.MODE_STATIC)
+                    .build()
+                
+                currentAudioTrack = audioTrack
+                
+                audioTrack.write(pcmData, 0, pcmData.size)
+                audioTrack.play()
+                
+                // Wait for playback to complete
+                val durationMs = (pcmData.size / 2) * 1000L / sampleRate
+                Thread.sleep(durationMs + 100)
+                
+                audioTrack.stop()
+                audioTrack.release()
+                currentAudioTrack = null
+                
+                Log.d(TAG, "✅ Playback done (${durationMs}ms)")
+                
+                // Don't stop SCO to keep mic active
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Audio playback error: ${e.message}", e)
             }
-            
-            val audioTrack = AudioTrack.Builder()
-                .setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                        .build()
-                )
-                .setAudioFormat(
-                    AudioFormat.Builder()
-                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                        .setSampleRate(sampleRate)
-                        .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-                        .build()
-                )
-                .setBufferSizeInBytes(pcmData.size)
-                .setTransferMode(AudioTrack.MODE_STATIC)
-                .build()
-            
-            currentAudioTrack = audioTrack
-            
-            audioTrack.write(pcmData, 0, pcmData.size)
-            audioTrack.play()
-            
-            // Wait for playback
-            val durationMs = (pcmData.size / 2) * 1000L / sampleRate
-            Thread.sleep(durationMs + 100)
-            
-            audioTrack.stop()
-            audioTrack.release()
-            currentAudioTrack = null
-            
-            // Don't stop SCO to keep mic active
-        } catch (e: Exception) {
-            Log.e(TAG, "❌ Audio playback error: ${e.message}", e)
         }
     }
     
