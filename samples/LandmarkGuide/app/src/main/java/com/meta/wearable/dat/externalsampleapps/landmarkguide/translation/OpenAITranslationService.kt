@@ -39,12 +39,12 @@ class OpenAITranslationService(private val context: Context) {
         private const val CHAT_URL = "https://api.openai.com/v1/chat/completions"
         private const val TTS_URL = "https://api.openai.com/v1/audio/speech"
         
-        // Language display names for prompts
+        // Language display names for prompts (with regional specifics)
         val LANGUAGE_NAMES = mapOf(
             "ko" to "Korean",
             "en" to "English", 
-            "ar" to "Arabic",
-            "es" to "Spanish"
+            "ar" to "Saudi Arabic",      // Saudi dialect
+            "es" to "Castilian Spanish"  // Spain Spanish, not Latin American
         )
         
         // TTS voice mapping (all natural sounding)
@@ -183,7 +183,7 @@ class OpenAITranslationService(private val context: Context) {
                 put("input", text)
                 put("voice", selectedVoice)
                 put("response_format", "pcm")  // Raw PCM
-                put("speed", 1.0)
+                put("speed", 1.15)  // 15% faster for natural conversation
             }
             
             val requestBody = jsonBody.toString()

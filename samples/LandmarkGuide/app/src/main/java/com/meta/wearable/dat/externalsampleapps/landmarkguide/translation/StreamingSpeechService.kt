@@ -84,17 +84,14 @@ class StreamingSpeechService {
         // Map language codes to Deepgram format
         val dgLang = when (languageCode) {
             "ko" -> "ko"
-            "ar" -> "ar"  // Arabic
-            "es" -> "es"
+            "ar" -> "ar"  // Arabic (Saudi)
+            "es" -> "es"  // Spanish (Castilian)
             "en" -> "en-US"
             else -> "en-US"
         }
         
-        // Nova-2 doesn't support Arabic - use Whisper for Arabic
-        val model = when (languageCode) {
-            "ar" -> "whisper-large"  // Arabic needs Whisper model
-            else -> "nova-2"          // Nova-2 for others (faster)
-        }
+        // Use Whisper Cloud for ALL languages - best accuracy!
+        val model = "whisper-large"
         
         // Build WebSocket URL with STABLE parameters only
         val url = "$DEEPGRAM_WS_URL?" +

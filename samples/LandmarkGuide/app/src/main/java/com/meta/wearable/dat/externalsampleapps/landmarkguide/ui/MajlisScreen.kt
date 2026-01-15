@@ -39,6 +39,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.meta.wearable.dat.externalsampleapps.landmarkguide.audio.BluetoothScoAudioCapture
 import com.meta.wearable.dat.externalsampleapps.landmarkguide.translation.StreamingSpeechService
 import com.meta.wearable.dat.externalsampleapps.landmarkguide.translation.GoogleSpeechService
+import com.meta.wearable.dat.externalsampleapps.landmarkguide.translation.VoskSpeechService
 import com.meta.wearable.dat.externalsampleapps.landmarkguide.translation.OpenAITranslationService
 import com.meta.wearable.dat.externalsampleapps.landmarkguide.translation.TranslationService
 import com.meta.wearable.dat.externalsampleapps.landmarkguide.ui.components.QrCodeDialog
@@ -448,7 +449,11 @@ fun MajlisRoomScreen(
     // Services
     val deepgramSTT = remember { StreamingSpeechService() }
     val googleSTT = remember { GoogleSpeechService() }
+    val voskSTT = remember { VoskSpeechService(context) }  // LOCAL STT!
     val openAI = remember { OpenAITranslationService(context) }
+    
+    // State: which STT to use
+    var useVosk by remember { mutableStateOf(false) }  // Toggle for local/cloud
     
     // Helper: use Google for Arabic, Deepgram for others
     fun isArabic(lang: String) = lang == TranslationService.LANG_ARABIC
@@ -456,7 +461,12 @@ fun MajlisRoomScreen(
     // Observe STT StateFlow (like LiveTranslationScreen)
     val deepgramTranscription by deepgramSTT.transcription.collectAsStateWithLifecycle()
     val googleTranscription by googleSTT.transcription.collectAsStateWithLifecycle()
-    val sttTranscription = if (googleTranscription.isNotBlank()) googleTranscription else deepgramTranscription
+    val voskTranscription by voskSTT.transcription.collectAsStateWithLifecycle()
+    val sttTranscription = when {
+        useVosk && voskTranscription.isNotBlank() -> voskTranscription
+        googleTranscription.isNotBlank() -> googleTranscription
+        else -> deepgramTranscription
+    }
     
     // Chat history (speaker, original, translation)
     data class ChatMessage(
@@ -601,10 +611,17 @@ fun MajlisRoomScreen(
         }
     }
     
-    // Setup STT callbacks
+    // Setup STT callbacks with SENTENCE-LEVEL processing
+    // Detect punctuation (. ? ! 。？) and trigger translation immediately
+    val sentenceEndPattern = remember { Regex("[.?!。？]\\s*$") }
+    var lastProcessedSentence by remember { mutableStateOf("") }
+    
     LaunchedEffect(Unit) {
         deepgramSTT.onTranscript = { text, isFinal ->
-            if (isFinal) {
+            // Process on sentence end OR final
+            val hasSentenceEnd = sentenceEndPattern.containsMatchIn(text)
+            if ((isFinal || hasSentenceEnd) && text != lastProcessedSentence) {
+                lastProcessedSentence = text
                 scope.launch { handleTranscript(text) }
             }
         }
@@ -613,12 +630,33 @@ fun MajlisRoomScreen(
         }
         
         googleSTT.onTranscript = { text, isFinal ->
-            if (isFinal) {
+            // Process on sentence end OR final
+            val hasSentenceEnd = sentenceEndPattern.containsMatchIn(text)
+            if ((isFinal || hasSentenceEnd) && text != lastProcessedSentence) {
+                lastProcessedSentence = text
                 scope.launch { handleTranscript(text) }
+                Log.d("MajlisRoom", if (hasSentenceEnd) "⚡ Sentence detected, translating now!" else "✅ Final transcript")
             }
         }
         googleSTT.onError = { error ->
             scope.launch { status = "❌ Google: $error" }
+        }
+        
+        // Vosk LOCAL STT callbacks
+        voskSTT.onTranscript = { text, isFinal ->
+            val hasSentenceEnd = sentenceEndPattern.containsMatchIn(text)
+            if ((isFinal || hasSentenceEnd) && text != lastProcessedSentence) {
+                lastProcessedSentence = text
+                scope.launch { handleTranscript(text) }
+                Log.d("MajlisRoom", "⚡ Vosk LOCAL: $text")
+            }
+        }
+        voskSTT.onPartialResult = { partial ->
+            // Could show partial results in UI if needed
+            Log.d("MajlisRoom", "🎤 Vosk partial: $partial")
+        }
+        voskSTT.onError = { error ->
+            scope.launch { status = "❌ Vosk: $error" }
         }
     }
     
@@ -631,24 +669,29 @@ fun MajlisRoomScreen(
             // Stop previous
             deepgramSTT.stopListening()
             googleSTT.stopListening()
+            voskSTT.stopListening()
             audioCapture?.stop()
             
             // Start appropriate STT
-            // Auto mode or Arabic → use Google (supports multi-language detection)
-            val useGoogle = mySpeakingLanguage == "auto" || isArabic(mySpeakingLanguage)
-            if (useGoogle) {
-                googleSTT.clearTranscription()
-                googleSTT.startListening(mySpeakingLanguage)
-                // Set up language detection callback for auto mode
-                if (mySpeakingLanguage == "auto") {
-                    googleSTT.onLanguageDetected = { lang ->
-                        scope.launch { 
-                            detectedLanguage = lang
-                            Log.d("Majlis", "🌐 Detected: $lang")
-                        }
+            if (useVosk) {
+                // LOCAL STT - ultra-low latency!
+                Log.d("Majlis", "🚀 Starting Vosk LOCAL STT...")
+                voskSTT.clearTranscription()
+                scope.launch {
+                    val loaded = voskSTT.initModel(mySpeakingLanguage)
+                    if (loaded) {
+                        voskSTT.startListening(mySpeakingLanguage)
+                        Log.d("Majlis", "✅ Vosk ready!")
+                    } else {
+                        Log.e("Majlis", "❌ Vosk failed, falling back to Deepgram")
+                        useVosk = false
+                        deepgramSTT.clearTranscription()
+                        deepgramSTT.startListening(mySpeakingLanguage)
                     }
                 }
             } else {
+                // Cloud STT - Deepgram Whisper Cloud (best accuracy + speed!)
+                Log.d("Majlis", "🎤 Starting Deepgram Whisper Cloud...")
                 deepgramSTT.clearTranscription()
                 deepgramSTT.startListening(mySpeakingLanguage)
             }
@@ -662,9 +705,13 @@ fun MajlisRoomScreen(
             capture.setListener(object : BluetoothScoAudioCapture.AudioCaptureListener {
                 override fun onAudioData(data: ByteArray, size: Int) {
                     val audioData = data.copyOf(size)
-                    if (useGoogle && googleSTT.isConnected()) {
-                        googleSTT.sendAudio(audioData)
+                    
+                    // Route audio to appropriate STT
+                    if (useVosk && voskSTT.isConnected()) {
+                        // LOCAL STT - ultra-low latency!
+                        voskSTT.processAudio(audioData)
                     } else if (deepgramSTT.isConnected()) {
+                        // Deepgram Whisper Cloud
                         deepgramSTT.sendAudio(audioData)
                     }
                     
