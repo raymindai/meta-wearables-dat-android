@@ -161,13 +161,14 @@ class OpenAITranslationService(private val context: Context) {
     }
     
     /**
-     * Speak text using OpenAI TTS with STREAMING for low latency
-     * Plays audio chunks as they arrive instead of waiting for full response
+     * Speak text using OpenAI TTS
+     * Uses full buffer download for stable playback (no crackling)
      */
     suspend fun speak(
         text: String,
         languageCode: String,
-        useBluetooth: Boolean = true
+        useBluetooth: Boolean = true,
+        voice: String? = null  // Optional: override voice (e.g., from VoiceAnalyzer)
     ): Boolean = withContext(Dispatchers.IO) {
         try {
             if (apiKey.isBlank()) {
@@ -175,13 +176,13 @@ class OpenAITranslationService(private val context: Context) {
                 return@withContext false
             }
             
-            val voice = TTS_VOICES[languageCode] ?: "onyx"
+            val selectedVoice = voice ?: TTS_VOICES[languageCode] ?: "onyx"
             
             val jsonBody = JSONObject().apply {
-                put("model", "tts-1")  // Use tts-1 for low latency
+                put("model", "tts-1")  // tts-1 for low latency
                 put("input", text)
-                put("voice", voice)
-                put("response_format", "pcm")  // Raw PCM for direct streaming playback
+                put("voice", selectedVoice)
+                put("response_format", "pcm")  // Raw PCM
                 put("speed", 1.0)
             }
             
@@ -195,7 +196,7 @@ class OpenAITranslationService(private val context: Context) {
                 .post(requestBody)
                 .build()
             
-            Log.d(TAG, "🔊 TTS: '$text' (voice: $voice)")
+            Log.d(TAG, "🔊 TTS: '$text' (voice: $selectedVoice)")
             val startTime = System.currentTimeMillis()
             
             val response = client.newCall(request).execute()
@@ -209,10 +210,8 @@ class OpenAITranslationService(private val context: Context) {
                 return@withContext false
             }
             
-            // Get full PCM audio data (non-streaming, but reliable)
+            // Full buffer download for stable playback
             val audioData = response.body?.bytes() ?: return@withContext false
-            
-            // Play audio
             playAudio(audioData, 24000, useBluetooth)
             
             Log.d(TAG, "✅ TTS played: ${audioData.size} bytes")

@@ -414,6 +414,9 @@ fun MajlisRoomScreen(
     var myListeningLanguage by remember { mutableStateOf(initialListeningLanguage) }
     var mySpeakingLanguage by remember { mutableStateOf(room.spokenLanguage) }
     var detectedLanguage by remember { mutableStateOf<String?>(null) }  // For auto-detect display
+    var detectedVoice by remember { mutableStateOf<String?>(null) }     // For male/female TTS voice
+    val voiceBuffer = remember { mutableListOf<Byte>() }               // Buffer for voice analysis
+    var voiceAnalyzed by remember { mutableStateOf(false) }            // Only analyze once per session
     var listenLangExpanded by remember { mutableStateOf(false) }
     var speakLangExpanded by remember { mutableStateOf(false) }
     
@@ -508,7 +511,7 @@ fun MajlisRoomScreen(
             // Play TTS if enabled
             if (peerTtsEnabled) {
                 android.util.Log.d("MajlisRoom", "🔊 Playing TTS: $translatedText")
-                openAI.speak(translatedText, myListeningLanguage, useBluetooth = true)
+                openAI.speak(translatedText, myListeningLanguage, useBluetooth = true, voice = detectedVoice)
             }
         }
     }
@@ -568,7 +571,7 @@ fun MajlisRoomScreen(
             scope.launch {
                 if (myTtsEnabled) {
                     userState = "SPEAKING_OUT"
-                    openAI.speak(text, myListeningLanguage, useBluetooth = true)
+                    openAI.speak(text, myListeningLanguage, useBluetooth = true, voice = detectedVoice)
                 }
                 userState = "LISTENING"
                 currentOriginal = ""
@@ -588,7 +591,7 @@ fun MajlisRoomScreen(
                     
                     if (myTtsEnabled) {
                         userState = "SPEAKING_OUT"
-                        openAI.speak(result.translatedText, myListeningLanguage, useBluetooth = true)
+                        openAI.speak(result.translatedText, myListeningLanguage, useBluetooth = true, voice = detectedVoice)
                     }
                 }
                 userState = "LISTENING"
@@ -664,6 +667,21 @@ fun MajlisRoomScreen(
                     } else if (deepgramSTT.isConnected()) {
                         deepgramSTT.sendAudio(audioData)
                     }
+                    
+                    // Collect audio for voice analysis (first 1 second = 32000 bytes at 16kHz)
+                    if (!voiceAnalyzed && voiceBuffer.size < 32000) {
+                        for (b in audioData) voiceBuffer.add(b)
+                        
+                        // Analyze when we have enough data
+                        if (voiceBuffer.size >= 32000) {
+                            val buffer = voiceBuffer.toByteArray()
+                            val voice = com.meta.wearable.dat.externalsampleapps.landmarkguide.voice.VoiceAnalyzer.getTtsVoice(buffer)
+                            detectedVoice = voice
+                            voiceAnalyzed = true
+                            Log.d("Majlis", "🎤 Voice detected: $voice (${if (voice == "nova") "Female" else "Male"})")
+                        }
+                    }
+                    
                     // Volume
                     var sum = 0L
                     for (i in 0 until size step 2) {
