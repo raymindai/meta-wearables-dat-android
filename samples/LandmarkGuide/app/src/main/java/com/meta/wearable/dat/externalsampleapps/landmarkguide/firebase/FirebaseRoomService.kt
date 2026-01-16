@@ -112,10 +112,19 @@ class FirebaseRoomService(
                     return // Skip myself
                 }
                 
+                // Only process if it has valid user data (name and language)
+                // This filters out any non-user nodes that might exist under /users/
+                if (!snapshot.hasChild("name") || !snapshot.hasChild("language")) {
+                    Log.d(TAG, "⚠️ Skipping invalid user node (missing name/language): $userId")
+                    return
+                }
+                
                 val user = parseUser(snapshot)
                 if (user != null) {
                     Log.d(TAG, "👤 User joined: ${user.name} (ID: $userId)")
                     onUserJoined(user)
+                } else {
+                    Log.w(TAG, "⚠️ Failed to parse user: $userId")
                 }
             }
             
@@ -146,8 +155,18 @@ class FirebaseRoomService(
             
             snapshot.children.forEach { child ->
                 val userId = child.key ?: return@forEach
+                
+                // Skip myself
                 if (userId == myUserId) {
-                    return@forEach  // Skip myself
+                    Log.d(TAG, "⏭️ Skipping myself in sync: $userId")
+                    return@forEach
+                }
+                
+                // Only process if it has valid user data (name and language)
+                // This filters out any non-user nodes that might exist under /users/
+                if (!child.hasChild("name") || !child.hasChild("language")) {
+                    Log.d(TAG, "⚠️ Skipping invalid user node (missing name/language): $userId")
+                    return@forEach
                 }
                 
                 val user = parseUser(child)
@@ -155,10 +174,12 @@ class FirebaseRoomService(
                     actualUsers.add(userId)
                     actualUserList.add(user)
                     Log.d(TAG, "🔄 Synced user: ${user.name} (ID: $userId)")
+                } else {
+                    Log.w(TAG, "⚠️ Failed to parse user: $userId")
                 }
             }
             
-            Log.d(TAG, "📊 Firebase sync complete: ${actualUsers.size} users found")
+            Log.d(TAG, "📊 Firebase sync complete: ${actualUsers.size} valid users found (total children: ${snapshot.childrenCount})")
             // Notify about all users (will be deduplicated in UI)
             actualUserList.forEach { user ->
                 onUserJoined(user)
@@ -175,8 +196,16 @@ class FirebaseRoomService(
                 
                 snapshot.children.forEach { child ->
                     val userId = child.key ?: return@forEach
+                    
+                    // Skip myself
                     if (userId == myUserId) {
-                        return@forEach  // Skip myself
+                        return@forEach
+                    }
+                    
+                    // Only process if it has valid user data (name and language)
+                    // This filters out any non-user nodes that might exist under /users/
+                    if (!child.hasChild("name") || !child.hasChild("language")) {
+                        return@forEach
                     }
                     
                     val user = parseUser(child)
@@ -186,7 +215,7 @@ class FirebaseRoomService(
                     }
                 }
                 
-                Log.d(TAG, "🔄 Periodic sync: ${actualUsers.size} users found")
+                Log.d(TAG, "🔄 Periodic sync: ${actualUsers.size} valid users found (total children: ${snapshot.childrenCount})")
                 // Notify about all users (will be deduplicated in UI)
                 actualUserList.forEach { user ->
                     onUserJoined(user)

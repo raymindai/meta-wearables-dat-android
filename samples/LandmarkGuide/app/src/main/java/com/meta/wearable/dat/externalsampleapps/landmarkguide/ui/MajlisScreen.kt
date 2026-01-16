@@ -653,9 +653,20 @@ fun MajlisRoomScreen(
     // OpenAI Realtime TTS for receiver-side translation
     val openAIRealtimeTTS = remember { OpenAIRealtimeTTSService(context) }
     
+    // Store myUserId separately so we can use it in callbacks
+    var myUserId by remember { mutableStateOf<String?>(null) }
+    
     val firebaseService = remember {
-        com.meta.wearable.dat.externalsampleapps.landmarkguide.firebase.FirebaseRoomService(
+        val service = com.meta.wearable.dat.externalsampleapps.landmarkguide.firebase.FirebaseRoomService(
             onUserJoined = { user ->
+                // Skip myself - should not happen, but safety check
+                myUserId?.let { myId ->
+                    if (user.userId == myId) {
+                        android.util.Log.d("MajlisRoom", "⏭️ Skipping myself in onUserJoined: ${user.userId}")
+                        return@FirebaseRoomService
+                    }
+                }
+                
                 // Always update - sync from Firebase may send duplicates, but we'll deduplicate
                 val existingIndex = connectedUsers.indexOfFirst { it.userId == user.userId }
                 if (existingIndex >= 0) {
@@ -670,10 +681,18 @@ fun MajlisRoomScreen(
                     android.util.Log.d("MajlisRoom", "👤 User joined: ${user.name} (ID: ${user.userId})")
                 }
                 
-                // Remove duplicates (LaunchedEffect will recalculate count)
-                val uniqueUsers = connectedUsers.distinctBy { it.userId }
-                connectedUsers = uniqueUsers
-                android.util.Log.d("MajlisRoom", "📋 User list updated: ${uniqueUsers.size} unique users")
+                // Remove duplicates and myself (LaunchedEffect will recalculate count)
+                myUserId?.let { myId ->
+                    val uniqueUsers = connectedUsers
+                        .distinctBy { it.userId }
+                        .filter { it.userId != myId }  // Extra safety: exclude myself
+                    connectedUsers = uniqueUsers
+                    android.util.Log.d("MajlisRoom", "📋 User list updated: ${uniqueUsers.size} unique users (excluding myself)")
+                } ?: run {
+                    val uniqueUsers = connectedUsers.distinctBy { it.userId }
+                    connectedUsers = uniqueUsers
+                    android.util.Log.d("MajlisRoom", "📋 User list updated: ${uniqueUsers.size} unique users")
+                }
             },
             onUserLeft = { userId ->
                 val beforeCount = connectedUsers.size
@@ -701,6 +720,7 @@ fun MajlisRoomScreen(
                 firebaseStatus = if (connected) "✅ Connected" else "⏳ Connecting..."
             }
         )
+        service  // Return the service
     }
     
     // UNIFIED LANGUAGE: All languages are now the same (from room selection)
@@ -753,20 +773,29 @@ fun MajlisRoomScreen(
         )
     }
     
+    // Store myUserId when firebaseService is created
+    LaunchedEffect(firebaseService) {
+        myUserId = firebaseService.myUserId
+        android.util.Log.d("MajlisRoom", "📌 Stored myUserId: $myUserId")
+    }
+    
     // Update user count based on actual unique connected users
-    // Use a more reliable calculation: always recalculate from connectedUsers
-    LaunchedEffect(connectedUsers) {
-        // Get unique user IDs (excluding myself)
-        val uniqueUserIds = connectedUsers.distinctBy { it.userId }.map { it.userId }.toSet()
-        val uniqueCount = uniqueUserIds.size
+    // connectedUsers already excludes myself (Firebase filters it out)
+    // So we just need: myself (1) + other users in connectedUsers
+    LaunchedEffect(connectedUsers, myUserId) {
+        // Get unique user IDs, explicitly excluding myself (safety check)
+        val myId = myUserId
+        val uniqueOtherUsers = connectedUsers
+            .distinctBy { it.userId }
+            .filter { myId == null || it.userId != myId }  // Safety: exclude myself if myId is available
         
-        // Calculate total: myself (1) + unique connected users
-        val newCount = 1 + uniqueCount
+        // Calculate total: myself (1) + other connected users
+        val newCount = 1 + uniqueOtherUsers.size
         
         // Only update if different to avoid unnecessary recomposition
         if (actualUserCount != newCount) {
             actualUserCount = newCount
-            android.util.Log.d("MajlisRoom", "📊 User count recalculated: $actualUserCount (unique users: $uniqueCount, total in list: ${connectedUsers.size}, unique IDs: $uniqueUserIds)")
+            android.util.Log.d("MajlisRoom", "📊 User count: $actualUserCount (myself: 1 + others: ${uniqueOtherUsers.size}, total in connectedUsers: ${connectedUsers.size}, myUserId: $myId)")
         }
     }
     
