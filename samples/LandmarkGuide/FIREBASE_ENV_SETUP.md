@@ -11,7 +11,7 @@
 2. **"환경 변수 추가"** 또는 **"Add environment variable"** 버튼 클릭
 3. 다음 정보 입력:
    - **변수 이름 (Name)**: `OPENAI_API_KEY`
-   - **값 (Value)**: `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`
+   - **값 (Value)**: `YOUR_OPENAI_API_KEY`
 4. **저장** 또는 **Save** 클릭
 
 ### 3. 확인

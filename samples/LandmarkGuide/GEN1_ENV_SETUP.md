@@ -46,7 +46,7 @@ Gen 1에서 Gen 2로 직접 업그레이드가 불가능하므로, Gen 1을 사�
    - **"Configuration"** 탭
    - **"Environment variables"** → **"Add variable"**
    - Name: `OPENAI_API_KEY`
-   - Value: `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`
+   - Value: `YOUR_OPENAI_API_KEY`
    - **Save**
 
 3. **함수 재배포** (환경 변수 적용)

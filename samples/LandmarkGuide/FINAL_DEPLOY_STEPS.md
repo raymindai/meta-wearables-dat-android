@@ -40,7 +40,7 @@
    - **"Environment variables"** 섹션 찾기
    - **"Add variable"** 또는 **"환경 변수 추가"** 버튼 클릭
    - Name: `OPENAI_API_KEY`
-   - Value: `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`
+   - Value: `YOUR_OPENAI_API_KEY`
    - **Save**
 
 5. **함수 재배포** (환경 변수 적용)
