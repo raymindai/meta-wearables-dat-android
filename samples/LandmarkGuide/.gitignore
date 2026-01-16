@@ -9,3 +9,14 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Documentation files with API keys
+DEPLOY_STEPS.md
+FIREBASE_DEPLOYMENT_STATUS.md
+YOUR_NEXT_STEPS.md
+ENV_SETUP_NOW.md
+FINAL_DEPLOY_STEPS.md
+FIREBASE_ENV_SETUP.md
+GEN1_ENV_SETUP.md
+firebase-debug.log
+*.log
