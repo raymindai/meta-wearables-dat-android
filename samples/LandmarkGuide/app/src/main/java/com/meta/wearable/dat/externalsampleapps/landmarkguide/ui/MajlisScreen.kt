@@ -939,10 +939,12 @@ fun MajlisRoomScreen(
     // VAD + Near-field Gate state
     // 8kHz, 16-bit mono: 20ms frame = 160 samples = 320 bytes
     val FRAME_SIZE_20MS = 320  // 20ms at 8kHz, 16-bit mono
+    val PREROLL_SIZE_300MS = 4800  // 300ms at 8kHz, 16-bit mono (300ms * 8kHz * 2 bytes)
     var vadGateOpen by remember { mutableStateOf(false) }
     var vadSpeechFrameCount by remember { mutableStateOf(0) }  // Consecutive speech frames
     var vadNonSpeechFrameCount by remember { mutableStateOf(0) }  // Consecutive non-speech frames
     var vadFrameBuffer by remember { mutableStateOf(ByteArray(0)) }  // Accumulate to 20ms frames
+    var prerollBuffer by remember { mutableStateOf(ByteArray(0)) }  // Ring buffer for 300ms preroll
     var vadRmsThreshold by remember { mutableStateOf(25) }  // VAD threshold (tunable, higher for very close voice)
     var nearFieldRmsThreshold by remember { mutableStateOf(35) }  // Near-field threshold (much higher for very close voice only)
     var backgroundNoiseLevel by remember { mutableStateOf(0) }  // For adaptive threshold
@@ -963,6 +965,7 @@ fun MajlisRoomScreen(
             vadSpeechFrameCount = 0
             vadNonSpeechFrameCount = 0
             vadFrameBuffer = ByteArray(0)
+            prerollBuffer = ByteArray(0)  // Reset preroll buffer
             noiseCalibrationSamples = 0
             backgroundNoiseLevel = 0
             
@@ -1037,6 +1040,7 @@ fun MajlisRoomScreen(
                                         vadSpeechFrameCount = 0
                                         vadNonSpeechFrameCount = 0
                                         vadFrameBuffer = ByteArray(0)
+                                        prerollBuffer = ByteArray(0)  // Reset preroll buffer
                                         return  // Mic disabled - ignore audio
                                     }
                                     
@@ -1089,21 +1093,50 @@ fun MajlisRoomScreen(
                                             vadSpeechFrameCount = 0
                                         }
                                         
+                                        // Update preroll buffer (Ring Buffer: keep last 300ms)
+                                        // Add current frame to preroll buffer
+                                        val newPrerollSize = prerollBuffer.size + FRAME_SIZE_20MS
+                                        val updatedPreroll = if (newPrerollSize > PREROLL_SIZE_300MS) {
+                                            // Remove oldest frames to keep only 300ms
+                                            val excessBytes = newPrerollSize - PREROLL_SIZE_300MS
+                                            val trimmedPreroll = ByteArray(PREROLL_SIZE_300MS)
+                                            System.arraycopy(prerollBuffer, excessBytes, trimmedPreroll, 0, PREROLL_SIZE_300MS - excessBytes)
+                                            System.arraycopy(frame, 0, trimmedPreroll, PREROLL_SIZE_300MS - excessBytes, FRAME_SIZE_20MS)
+                                            trimmedPreroll
+                                        } else {
+                                            // Append to preroll buffer
+                                            val expandedPreroll = ByteArray(newPrerollSize)
+                                            System.arraycopy(prerollBuffer, 0, expandedPreroll, 0, prerollBuffer.size)
+                                            System.arraycopy(frame, 0, expandedPreroll, prerollBuffer.size, FRAME_SIZE_20MS)
+                                            expandedPreroll
+                                        }
+                                        prerollBuffer = updatedPreroll
+                                        
                                         // Gate open condition: 5 consecutive speech frames (100ms) - stricter for very close voice
+                                        val wasGateClosed = !vadGateOpen
                                         if (!vadGateOpen && vadSpeechFrameCount >= 5) {
                                             vadGateOpen = true
                                             Log.d("Majlis", "🎤 VAD Gate OPEN (RMS: $rms, threshold: $vadRmsThreshold, nearField: $nearFieldRmsThreshold)")
+                                            
+                                            // When gate opens, send preroll buffer (300ms) + current frame
+                                            if (googleSTT.isConnected() && prerollBuffer.isNotEmpty()) {
+                                                googleSTT.sendAudio(prerollBuffer)
+                                                Log.d("Majlis", "📤 Sent preroll buffer: ${prerollBuffer.size} bytes (${prerollBuffer.size / 320} frames)")
+                                            }
                                         }
                                         
                                         // Gate close condition: 10 consecutive non-speech frames (200ms)
                                         if (vadGateOpen && vadNonSpeechFrameCount >= 10) {
                                             vadGateOpen = false
                                             vadSpeechFrameCount = 0
+                                            prerollBuffer = ByteArray(0)  // Clear preroll when gate closes
                                             Log.d("Majlis", "🔇 VAD Gate CLOSE (RMS: $rms)")
                                         }
                                         
                                         // Only send audio to Soniox when gate is open
-                                        if (vadGateOpen && googleSTT.isConnected()) {
+                                        // If gate just opened, preroll was already sent above, so skip current frame
+                                        // Otherwise, send current frame normally
+                                        if (vadGateOpen && googleSTT.isConnected() && !wasGateClosed) {
                                             googleSTT.sendAudio(frame)
                                         }
                                         
@@ -2830,6 +2863,7 @@ fun MajlisRoomScreen(
                                     vadSpeechFrameCount = 0
                                     vadNonSpeechFrameCount = 0
                                     vadFrameBuffer = ByteArray(0)
+                                    prerollBuffer = ByteArray(0)  // Reset preroll buffer
                                     return  // Mic disabled - ignore audio
                                 }
                                 
@@ -2882,21 +2916,50 @@ fun MajlisRoomScreen(
                                         vadSpeechFrameCount = 0
                                     }
                                     
+                                    // Update preroll buffer (Ring Buffer: keep last 300ms)
+                                    // Add current frame to preroll buffer
+                                    val newPrerollSize = prerollBuffer.size + FRAME_SIZE_20MS
+                                    val updatedPreroll = if (newPrerollSize > PREROLL_SIZE_300MS) {
+                                        // Remove oldest frames to keep only 300ms
+                                        val excessBytes = newPrerollSize - PREROLL_SIZE_300MS
+                                        val trimmedPreroll = ByteArray(PREROLL_SIZE_300MS)
+                                        System.arraycopy(prerollBuffer, excessBytes, trimmedPreroll, 0, PREROLL_SIZE_300MS - excessBytes)
+                                        System.arraycopy(frame, 0, trimmedPreroll, PREROLL_SIZE_300MS - excessBytes, FRAME_SIZE_20MS)
+                                        trimmedPreroll
+                                    } else {
+                                        // Append to preroll buffer
+                                        val expandedPreroll = ByteArray(newPrerollSize)
+                                        System.arraycopy(prerollBuffer, 0, expandedPreroll, 0, prerollBuffer.size)
+                                        System.arraycopy(frame, 0, expandedPreroll, prerollBuffer.size, FRAME_SIZE_20MS)
+                                        expandedPreroll
+                                    }
+                                    prerollBuffer = updatedPreroll
+                                    
                                     // Gate open condition: 3 consecutive speech frames (60ms)
+                                    val wasGateClosed = !vadGateOpen
                                     if (!vadGateOpen && vadSpeechFrameCount >= 3) {
                                         vadGateOpen = true
                                         Log.d("Majlis", "🎤 VAD Gate OPEN (RMS: $rms, threshold: $vadRmsThreshold)")
+                                        
+                                        // When gate opens, send preroll buffer (300ms) + current frame
+                                        if (googleSTT.isConnected() && prerollBuffer.isNotEmpty()) {
+                                            googleSTT.sendAudio(prerollBuffer)
+                                            Log.d("Majlis", "📤 Sent preroll buffer: ${prerollBuffer.size} bytes (${prerollBuffer.size / 320} frames)")
+                                        }
                                     }
                                     
                                     // Gate close condition: 10 consecutive non-speech frames (200ms)
                                     if (vadGateOpen && vadNonSpeechFrameCount >= 10) {
                                         vadGateOpen = false
                                         vadSpeechFrameCount = 0
+                                        prerollBuffer = ByteArray(0)  // Clear preroll when gate closes
                                         Log.d("Majlis", "🔇 VAD Gate CLOSE (RMS: $rms)")
                                     }
                                     
                                     // Only send audio to Soniox when gate is open
-                                    if (vadGateOpen && googleSTT.isConnected()) {
+                                    // If gate just opened, preroll was already sent above, so skip current frame
+                                    // Otherwise, send current frame normally
+                                    if (vadGateOpen && googleSTT.isConnected() && !wasGateClosed) {
                                         googleSTT.sendAudio(frame)
                                     }
                                     
@@ -2935,6 +2998,7 @@ fun MajlisRoomScreen(
                         vadSpeechFrameCount = 0
                         vadNonSpeechFrameCount = 0
                         vadFrameBuffer = ByteArray(0)
+                        prerollBuffer = ByteArray(0)  // Reset preroll buffer
                         noiseCalibrationSamples = 0
                         backgroundNoiseLevel = 0
                         googleSTT.stopListening()
