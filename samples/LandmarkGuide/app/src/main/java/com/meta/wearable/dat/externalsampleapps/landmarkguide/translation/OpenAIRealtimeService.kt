@@ -77,8 +77,18 @@ class OpenAIRealtimeService(private val context: Context) {
     // Callbacks
     var onTranscript: ((String) -> Unit)? = null
     var onTranslation: ((String) -> Unit)? = null
+    var onTranslationWithOriginal: ((String, String) -> Unit)? = null  // (original, translation)
     var onAudioResponse: ((ByteArray) -> Unit)? = null
+    var onSpeechStarted: (() -> Unit)? = null
+    var onSpeechEnded: (() -> Unit)? = null
+    
+    // TTS control - can be set externally to mute/unmute audio playback
+    var ttsEnabled: Boolean = true
     var onError: ((String) -> Unit)? = null
+    
+    // State tracking for translation matching
+    private var lastTranscriptForTranslation = ""
+    private var isSpeaking = false
     
     private var sourceLanguage = "ko"
     private var targetLanguage = "en"
@@ -101,8 +111,10 @@ class OpenAIRealtimeService(private val context: Context) {
         sourceLanguage = sourceLang
         targetLanguage = targetLang
         
-        val sourceName = LANGUAGE_NAMES[sourceLang] ?: "Korean"
-        val targetName = LANGUAGE_NAMES[targetLang] ?: "English"
+        val sourceName = LANGUAGE_NAMES[sourceLang] ?: sourceLang
+        val targetName = LANGUAGE_NAMES[targetLang] ?: targetLang
+        
+        Log.d(TAG, "🚀 Starting OpenAI Realtime: $sourceLang ($sourceName) → $targetLang ($targetName)")
         
         val url = "$REALTIME_URL?model=$MODEL"
         
@@ -133,12 +145,32 @@ class OpenAIRealtimeService(private val context: Context) {
                 isConnected = false
                 _isListening.value = false
                 onError?.invoke(t.message ?: "Connection failed")
+                
+                // Auto-reconnect after error
+                scope.launch {
+                    Log.d(TAG, "🔄 Auto-reconnecting in 2 seconds...")
+                    kotlinx.coroutines.delay(2000)
+                    if (!isConnected) {
+                        start(sourceLanguage, targetLanguage)
+                    }
+                }
             }
             
             override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-                Log.d(TAG, "WebSocket closed: $reason")
+                Log.d(TAG, "WebSocket closed: $reason (code=$code)")
                 isConnected = false
                 _isListening.value = false
+                
+                // Auto-reconnect if closed unexpectedly (not by us)
+                if (code != 1000) {
+                    scope.launch {
+                        Log.d(TAG, "🔄 Auto-reconnecting after unexpected close...")
+                        kotlinx.coroutines.delay(1000)
+                        if (!isConnected) {
+                            start(sourceLanguage, targetLanguage)
+                        }
+                    }
+                }
             }
         })
         
@@ -147,21 +179,44 @@ class OpenAIRealtimeService(private val context: Context) {
     }
     
     private fun configureSession(sourceLang: String, targetLang: String) {
+        val sourceName = LANGUAGE_NAMES[sourceLang] ?: sourceLang
+        val targetName = LANGUAGE_NAMES[targetLang] ?: targetLang
+        
         val sessionConfig = JSONObject().apply {
             put("type", "session.update")
             put("session", JSONObject().apply {
                 put("modalities", JSONArray().apply {
-                    put("text")
                     put("audio")
+                    put("text")  // Required by API - but we won't send text, only audio
                 })
+                put("tools", JSONArray())  // No tools allowed
+                put("tool_choice", "none")  // Explicitly disable tool usage
                 put("instructions", """
-                    You are a real-time translator. 
-                    Listen to audio in $sourceLang and translate it to $targetLang.
-                    Respond ONLY with the translation in $targetLang.
-                    Keep responses short and natural for speech.
-                    Do not add any explanations.
+                    You are a TRANSLATION-ONLY service. Your ONLY job is to translate speech from $sourceName to $targetName.
+                    
+                    CRITICAL RULES - VIOLATION WILL CAUSE SYSTEM FAILURE:
+                    1. NEVER engage in conversation - you are NOT a chatbot
+                    2. NEVER answer questions - you are NOT an assistant
+                    3. NEVER provide explanations - you are NOT a teacher
+                    4. NEVER add commentary - you are NOT a commentator
+                    5. NEVER respond to greetings - you are NOT a person
+                    6. NEVER ask questions - you are NOT curious
+                    7. ONLY output the direct translation of what you hear - word for word translation
+                    8. If you hear something that is not in $sourceName, output NOTHING - complete silence
+                    9. If the input is unclear or not speech, output NOTHING - complete silence
+                    10. If someone asks "how are you", translate it to "$targetName" - do NOT answer
+                    11. If someone says "hello", translate it to "$targetName" - do NOT greet back
+                    12. If someone asks a question, translate the question - do NOT answer it
+                    
+                    Input language MUST be $sourceName. If detected language differs, output NOTHING.
+                    Output language MUST be $targetName. No exceptions.
+                    
+                    You are a MACHINE TRANSLATOR. You have NO personality. You have NO opinions. You have NO knowledge beyond translation.
+                    You are NOT an assistant. You are NOT a chatbot. You are NOT a person. You are ONLY a translator.
+                    
+                    REMEMBER: If you engage in conversation, answer questions, or provide explanations, the system will fail.
                 """.trimIndent())
-                put("voice", "alloy")  // Natural voice
+                put("voice", "echo")  // Male voice (alloy sounds female)
                 put("input_audio_format", "pcm16")
                 put("output_audio_format", "pcm16")
                 put("input_audio_transcription", JSONObject().apply {
@@ -169,15 +224,15 @@ class OpenAIRealtimeService(private val context: Context) {
                 })
                 put("turn_detection", JSONObject().apply {
                     put("type", "server_vad")
-                    put("threshold", 0.5)
+                    put("threshold", 0.75)  // Higher = less sensitive to noise (increased from 0.7)
                     put("prefix_padding_ms", 300)
-                    put("silence_duration_ms", 500)  // Fast detection
+                    put("silence_duration_ms", 700)  // Slightly longer to avoid cutting off
                 })
             })
         }
         
         webSocket?.send(sessionConfig.toString())
-        Log.d(TAG, "📤 Session configured for $sourceLang → $targetLang")
+        Log.d(TAG, "📤 Session configured for $sourceName → $targetName (codes: $sourceLang → $targetLang)")
     }
     
     private fun handleMessage(text: String) {
@@ -194,38 +249,70 @@ class OpenAIRealtimeService(private val context: Context) {
                 }
                 "input_audio_buffer.speech_started" -> {
                     Log.d(TAG, "🎤 Speech detected")
+                    isSpeaking = true
+                    onSpeechStarted?.invoke()
                 }
                 "input_audio_buffer.speech_stopped" -> {
                     Log.d(TAG, "🔇 Speech ended")
+                    isSpeaking = false
+                    onSpeechEnded?.invoke()
                 }
                 "conversation.item.input_audio_transcription.completed" -> {
                     val transcript = json.optString("transcript", "")
                     if (transcript.isNotBlank()) {
-                        Log.d(TAG, "📝 Transcript: $transcript")
+                        Log.d(TAG, "📝 Transcript received: '$transcript' (source: $sourceLanguage)")
                         _transcription.value = transcript
+                        lastTranscriptForTranslation = transcript  // Store for translation matching
                         onTranscript?.invoke(transcript)
+                    } else {
+                        Log.w(TAG, "⚠️ Empty transcript received")
                     }
                 }
                 "response.audio_transcript.delta" -> {
                     val delta = json.optString("delta", "")
+                    // Only accumulate if we have a valid original transcript
+                    if (lastTranscriptForTranslation.isNotBlank()) {
                     _translation.value += delta
+                    }
                 }
                 "response.audio_transcript.done" -> {
                     val transcript = json.optString("transcript", "")
-                    Log.d(TAG, "🌐 Translation: $transcript")
+                    // Only process if we have a valid original transcript (prevents AI responses to non-speech)
+                    if (lastTranscriptForTranslation.isNotBlank()) {
+                    Log.d(TAG, "🌐 Translation: $transcript (original: $lastTranscriptForTranslation)")
                     _translation.value = transcript
-                    onTranslation?.invoke(transcript)
+                    // Pass both original and translation
+                    if (transcript.isNotBlank()) {
+                        onTranslationWithOriginal?.invoke(lastTranscriptForTranslation, transcript)
+                        onTranslation?.invoke(transcript)
+                        }
+                    } else {
+                        Log.w(TAG, "⚠️ Ignoring translation response - no matching original transcript (possible AI conversation attempt)")
+                    }
+                    lastTranscriptForTranslation = ""  // Reset after use
+                }
+                "response.text.delta", "response.text.done", "response.item.created" -> {
+                    // Block any text responses (AI trying to have a conversation)
+                    Log.w(TAG, "🚫 Blocked AI text response attempt: $type")
                 }
                 "response.audio.delta" -> {
-                    // Decode and play audio immediately
+                    // Decode and play audio only if TTS is enabled
+                    if (ttsEnabled) {
                     val audioBase64 = json.optString("delta", "")
                     if (audioBase64.isNotBlank()) {
                         val audioBytes = Base64.decode(audioBase64, Base64.DEFAULT)
                         playAudioChunk(audioBytes)
+                        }
+                    } else {
+                        // TTS disabled - ignore audio chunks
                     }
                 }
                 "response.audio.done" -> {
+                    if (ttsEnabled) {
                     Log.d(TAG, "🔊 Audio response complete")
+                    } else {
+                        Log.d(TAG, "🔇 Audio response received but TTS disabled (ignored)")
+                    }
                 }
                 "error" -> {
                     val error = json.optJSONObject("error")
@@ -256,42 +343,63 @@ class OpenAIRealtimeService(private val context: Context) {
     }
     
     private fun setupAudioPlayback() {
-        val sampleRate = 24000  // OpenAI Realtime uses 24kHz
-        val bufferSize = AudioTrack.getMinBufferSize(
-            sampleRate,
-            AudioFormat.CHANNEL_OUT_MONO,
-            AudioFormat.ENCODING_PCM_16BIT
-        )
-        
-        audioTrack = AudioTrack.Builder()
-            .setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                    .build()
+        try {
+            val sampleRate = 24000  // OpenAI Realtime uses 24kHz
+            val bufferSize = AudioTrack.getMinBufferSize(
+                sampleRate,
+                AudioFormat.CHANNEL_OUT_MONO,
+                AudioFormat.ENCODING_PCM_16BIT
             )
-            .setAudioFormat(
-                AudioFormat.Builder()
-                    .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                    .setSampleRate(sampleRate)
-                    .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+            
+            synchronized(this) {
+                audioTrack = AudioTrack.Builder()
+                    .setAudioAttributes(
+                        AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                            .build()
+                    )
+                    .setAudioFormat(
+                        AudioFormat.Builder()
+                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                            .setSampleRate(sampleRate)
+                            .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                            .build()
+                    )
+                    .setBufferSizeInBytes(bufferSize * 8)  // Increased buffer for smooth playback
+                    .setTransferMode(AudioTrack.MODE_STREAM)
                     .build()
-            )
-            .setBufferSizeInBytes(bufferSize * 4)
-            .setTransferMode(AudioTrack.MODE_STREAM)
-            .build()
-        
-        // Route to Bluetooth
-        audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
-        audioManager.startBluetoothSco()
-        audioManager.isBluetoothScoOn = true
-        
-        audioTrack?.play()
+                
+                // Route to Bluetooth
+                audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+                audioManager.startBluetoothSco()
+                audioManager.isBluetoothScoOn = true
+                
+                audioTrack?.play()
+            }
+            Log.d(TAG, "🔊 Audio playback setup complete (buffer: ${bufferSize * 8})")
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Audio setup error: ${e.message}", e)
+        }
     }
     
     private fun playAudioChunk(audioData: ByteArray) {
-        scope.launch {
-            audioTrack?.write(audioData, 0, audioData.size)
+        // Skip audio playback if TTS is disabled
+        if (!ttsEnabled) return
+        
+        try {
+            synchronized(this) {
+                val track = audioTrack
+                if (track != null && track.state == AudioTrack.STATE_INITIALIZED) {
+                    // Ensure track is playing
+                    if (track.playState != AudioTrack.PLAYSTATE_PLAYING) {
+                        track.play()
+                    }
+                    track.write(audioData, 0, audioData.size)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Audio write error: ${e.message}")
         }
     }
     
@@ -306,12 +414,22 @@ class OpenAIRealtimeService(private val context: Context) {
         isConnected = false
         _isListening.value = false
         
-        audioTrack?.stop()
-        audioTrack?.release()
-        audioTrack = null
+        synchronized(this) {
+            try {
+                audioTrack?.stop()
+                audioTrack?.release()
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Audio stop error: ${e.message}")
+            }
+            audioTrack = null
+        }
         
-        audioManager.stopBluetoothSco()
-        audioManager.mode = AudioManager.MODE_NORMAL
+        try {
+            audioManager.stopBluetoothSco()
+            audioManager.mode = AudioManager.MODE_NORMAL
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Bluetooth cleanup error: ${e.message}")
+        }
     }
     
     fun isConnected(): Boolean = isConnected

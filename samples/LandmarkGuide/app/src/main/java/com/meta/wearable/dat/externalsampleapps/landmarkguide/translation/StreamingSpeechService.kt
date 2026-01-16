@@ -82,16 +82,20 @@ class StreamingSpeechService {
         }
         
         // Map language codes to Deepgram format
+        // Whisper uses simple codes (en, ko, ar, es)
+        // Nova-2 uses regional codes (en-US, ko, ar, es)
         val dgLang = when (languageCode) {
             "ko" -> "ko"
-            "ar" -> "ar"  // Arabic (Saudi)
-            "es" -> "es"  // Spanish (Castilian)
-            "en" -> "en-US"
-            else -> "en-US"
+            "ar" -> "ar"  // Arabic
+            "es" -> "es"  // Spanish
+            "en" -> "en"
+            "auto" -> "en"  // Default to English for auto
+            else -> "en"
         }
         
-        // Use Whisper Cloud for ALL languages - best accuracy!
-        val model = "whisper-large"
+        // Nova-2 for real-time streaming (fastest)
+        // Whisper doesn't support real-time streaming!
+        val model = "nova-2"
         
         // Build WebSocket URL with STABLE parameters only
         val url = "$DEEPGRAM_WS_URL?" +

@@ -1,0 +1,355 @@
+--------- beginning of main
+01-15 15:30:13.807 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): unbindService is called for service : com.google.android.gms/.chimera.PersistentApiService and for client com.google.android.gms.persistent
+--------- beginning of kernel
+01-15 15:30:12.732 I/adsp_sleepmon(  851): timer_event = 1,suspend_event = 0
+01-15 15:30:12.753 I/logd    (  791): logdr: UID=2000 GID=2000 PID=25657 b tail=0 logMask=99 pid=0 start=0ns deadline=0ns
+01-15 15:30:12.924 W/[    C0] [rt_task_fixup][725](    0): RT task was runnable for more than 200000 ns on CPU 0, moved it to CPU 2 (gmu_f2h-1654)
+01-15 15:30:14.117 I/SDM     ( 1620): DisplayBase::CommitThread: Received idle timeout, panel: video, timeout: 69999 us
+01-15 15:30:14.148 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): unbindService is called for service : com.google.android.gms/.chimera.PersistentDirectBootAwareApiService and for client com.google.android.gms
+01-15 15:30:14.284 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): unbindService is called for service : com.google.android.gms/.icing.service.AppIndexingService and for client com.google.android.gms
+01-15 15:30:14.284 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): size of service connections for service: com.google.android.gms/.icing.service.AppIndexingServiceafter removal is 1
+01-15 15:30:14.284 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): size of client connections for client: com.google.android.gmsafter removal is 7
+01-15 15:30:14.288 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): unbindService is called for service : com.google.android.gms/.chimera.GmsBoundBrokerService and for client com.google.android.gms.persistent
+01-15 15:30:14.288 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): size of service connections for service: com.google.android.gms/.chimera.GmsBoundBrokerServiceafter removal is 1
+01-15 15:30:14.288 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): size of client connections for client: com.google.android.gms.persistentafter removal is 8
+01-15 15:30:14.289 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): unbindService is called for service : com.google.android.gms/.chimera.GmsBoundBrokerService and for client com.google.android.gms
+01-15 15:30:14.289 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): size of service connections for service: com.google.android.gms/.chimera.GmsBoundBrokerServiceafter removal is 0
+01-15 15:30:14.289 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): size of client connections for client: com.google.android.gmsafter removal is 6
+01-15 15:30:14.292 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): destroyService is called for service : com.google.android.gms/.chimera.GmsBoundBrokerService
+01-15 15:30:14.292 D/BoundBrokerSvc(26684): onUnbind: Intent { act=com.google.android.gms.feedback.internal.IFeedbackService dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsBoundBrokerService }
+01-15 15:30:14.294 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s
+01-15 15:30:14.295 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:14.296 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:14.296 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): unbindService is called for service : com.google.android.gms/.icing.service.AppIndexingService and for client com.google.android.gms.persistent
+01-15 15:30:14.296 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): size of service connections for service: com.google.android.gms/.icing.service.AppIndexingServiceafter removal is 0
+01-15 15:30:14.296 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): size of client connections for client: com.google.android.gms.persistentafter removal is 7
+01-15 15:30:14.296 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): destroyService is called for service : com.google.android.gms/.icing.service.AppIndexingService
+01-15 15:30:14.297 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:14.297 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:30:14.298 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:30:14.299 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): unbindService is called for service : com.google.android.gms/.icing.service.IndexService and for client com.google.android.gms.persistent
+01-15 15:30:14.299 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): size of service connections for service: com.google.android.gms/.icing.service.IndexServiceafter removal is 1
+01-15 15:30:14.299 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): size of client connections for client: com.google.android.gms.persistentafter removal is 6
+01-15 15:30:14.299 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): unbindService is called for service : com.google.android.gms/.icing.service.IndexService and for client com.google.android.gms
+01-15 15:30:14.299 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): size of service connections for service: com.google.android.gms/.icing.service.IndexServiceafter removal is 0
+01-15 15:30:14.299 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): size of client connections for client: com.google.android.gmsafter removal is 5
+01-15 15:30:14.300 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): destroyService is called for service : com.google.android.gms/.icing.service.IndexService
+01-15 15:30:14.303 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): unbindService is called for service : com.google.android.gms/.chimera.PersistentApiService and for client com.google.android.gms
+01-15 15:30:14.309 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): destroyService is called for service : com.google.android.gms/.games.chimera.GamesAsyncServiceProxy
+01-15 15:30:14.720 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): unbindService is called for service : com.google.android.gms/.chimera.PersistentDirectBootAwareApiService and for client com.google.android.gms.persistent
+01-15 15:30:14.726 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): unbindService is called for service : com.google.android.gms/.chimera.GmsApiService and for client com.google.android.gms
+01-15 15:30:14.726 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): size of service connections for service: com.google.android.gms/.chimera.GmsApiServiceafter removal is 4
+01-15 15:30:14.726 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): size of client connections for client: com.google.android.gmsafter removal is 4
+01-15 15:30:14.798 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): unbindService is called for service : com.google.android.gms/.instantapps.service.InstantAppsService and for client com.google.android.gms.ui
+01-15 15:30:14.798 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): size of service connections for service: com.google.android.gms/.instantapps.service.InstantAppsServiceafter removal is 0
+01-15 15:30:14.798 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): size of client connections for client: com.google.android.gms.uiafter removal is 3
+01-15 15:30:14.800 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): destroyService is called for service : com.google.android.gms/.instantapps.service.InstantAppsService
+01-15 15:30:14.801 D/BoundBrokerSvc(13659): onUnbind: Intent { act=com.google.android.gms.instantapps.START xflg=0x4 pkg=com.google.android.gms }
+01-15 15:30:14.805 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): unbindService is called for service : com.google.android.gms/.chimera.PersistentApiService and for client com.google.android.gms.ui
+01-15 15:30:14.807 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): unbindService is called for service : com.google.android.gms/.chimera.GmsApiService and for client com.google.android.gms.ui
+01-15 15:30:14.808 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): size of service connections for service: com.google.android.gms/.chimera.GmsApiServiceafter removal is 3
+01-15 15:30:14.808 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): size of client connections for client: com.google.android.gms.uiafter removal is 2
+01-15 15:30:14.809 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): unbindService is called for service : com.google.android.gms/.chimera.PersistentInternalApiService and for client com.google.android.gms.ui
+01-15 15:30:14.809 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): size of service connections for service: com.google.android.gms/.chimera.PersistentInternalApiServiceafter removal is 0
+01-15 15:30:14.809 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): size of client connections for client: com.google.android.gms.uiafter removal is 1
+01-15 15:30:14.809 D/BoundBrokerSvc(26684): onUnbind: Intent { act=com.google.android.gms.esim.service.START dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsApiService }
+01-15 15:30:14.810 I/EsimTransferChimeraServ(26684): onUnbind [CONTEXT service_id=333 ]
+01-15 15:30:14.810 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): destroyService is called for service : com.google.android.gms/.chimera.PersistentInternalApiService
+01-15 15:30:14.810 D/BoundBrokerSvc(13659): onUnbind: Intent { act=com.google.android.gms.trustagent.BridgeApi.START dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.PersistentInternalApiService }
+--------- beginning of system
+01-15 15:30:14.911 D/ActivityManager( 2617): freezing 16120 com.google.android.gms.ui
+01-15 15:30:15.036 D/StNfcHal( 1992): (#0CC89) Rx 6f 02 0f (hidden)
+01-15 15:30:15.037 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:30:15.045 D/StNfcHal( 1992): (#0CC8A) Rx 6f 02 33 (hidden)
+01-15 15:30:15.045 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:30:15.309 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s
+01-15 15:30:15.310 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:15.311 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:15.311 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:15.311 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:30:15.312 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:30:15.526 I/SDM     ( 1620): DisplayBase::CommitThread: Received idle timeout, panel: video, timeout: 70000 us
+01-15 15:30:14.436 W/[    C0] [rt_task_fixup][725](    0): RT task was runnable for more than 200000 ns on CPU 0, moved it to CPU 1 (RegionSampling-1897)
+01-15 15:30:15.578 D/ActivityManager( 2617): freezing 16087 com.android.traceur
+01-15 15:30:15.582 D/ActivityManager( 2617): freezing 16102 com.google.android.accessibility.switchaccess
+01-15 15:30:15.587 D/InetDiagMessage( 2617): Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+01-15 15:30:15.591 D/InetDiagMessage( 2617): Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+01-15 15:30:15.591 D/InetDiagMessage( 2617): Destroyed live tcp sockets for uids={10103} in 9ms
+01-15 15:30:15.595 D/InetDiagMessage( 2617): Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+01-15 15:30:15.598 D/InetDiagMessage( 2617): Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+01-15 15:30:15.599 D/InetDiagMessage( 2617): Destroyed live tcp sockets for uids={10193} in 8ms
+01-15 15:30:15.618 D/ActivityManager( 2617): freezing 14401 com.google.android.apps.messaging
+01-15 15:30:15.622 D/ActivityManager( 2617): freezing 15283 com.google.android.apps.safetyhub
+01-15 15:30:15.631 D/InetDiagMessage( 2617): Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+01-15 15:30:15.635 D/InetDiagMessage( 2617): Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+01-15 15:30:15.635 D/InetDiagMessage( 2617): Destroyed live tcp sockets for uids={10157} in 9ms
+01-15 15:30:15.635 D/ActivityManager( 2617): freezing 22841 com.google.android.cellbroadcastreceiver
+01-15 15:30:15.643 D/InetDiagMessage( 2617): Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+01-15 15:30:15.646 D/InetDiagMessage( 2617): Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+01-15 15:30:15.646 D/InetDiagMessage( 2617): Destroyed live tcp sockets for uids={10259} in 8ms
+01-15 15:30:15.765 D/vendor.qti.bluetooth@1.1-ibs_handler( 1502): SerialClockVote: vote for UART CLK ON
+01-15 15:30:15.767 D/vendor.qti.bluetooth@1.1-wake_lock( 1502): Acquire wakelock is acquired 
+01-15 15:30:15.767 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): DeviceWakeUp: Writing IBS_WAKE_IND
+01-15 15:30:15.771 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): ProcessIbsCmd: Received IBS_WAKE_ACK: 0xFC
+01-15 15:30:15.772 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): ProcessIbsCmd: Signal wack_cond_
+01-15 15:30:15.772 D/vendor.qti.bluetooth@1.1-ibs_handler( 1502): DeviceWakeUp: Unblocked from waiting for FC, pthread_cond_timedwait ret = 0
+01-15 15:30:15.773 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+01-15 15:30:15.773 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): ProcessIbsCmd: Writing IBS_WAKE_ACK
+01-15 15:30:15.775 I/bluetooth(15621): system/bta/le_audio/client.cc:1673 IsInStreaming: audio_sender_state_: IDLE, audio_receiver_state_: IDLE
+01-15 15:30:15.815 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+01-15 15:30:15.825 D/ActivityManager( 2617): freezing 13416 com.google.android.googlequicksearchbox:search
+01-15 15:30:15.853 D/ActivityManager( 2617): freezing 16171 com.google.android.healthconnect.controller
+01-15 15:30:15.860 D/InetDiagMessage( 2617): Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+01-15 15:30:15.864 D/InetDiagMessage( 2617): Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+01-15 15:30:15.864 D/InetDiagMessage( 2617): Destroyed live tcp sockets for uids={10243} in 8ms
+01-15 15:30:15.887 D/ActivityManager( 2617): freezing 16183 com.google.android.marvin.talkback
+01-15 15:30:15.895 D/InetDiagMessage( 2617): Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+01-15 15:30:15.899 D/InetDiagMessage( 2617): Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+01-15 15:30:15.899 D/InetDiagMessage( 2617): Destroyed live tcp sockets for uids={10165} in 9ms
+01-15 15:30:14.815 E/[    C0] [soft_i][0xc4dd9d00056][20(    0): 30:15.940077] qca6750: [0:E:QDF] htc_rx_completion_handler: Received initial wake up
+01-15 15:30:14.815 I/[kworke][0xc4dd9d01a2c][20:30:15.940420] qca6750(24865): [24865:I:PMO] pmo_core_psoc_send_host_wakeup_ind_to_fw: Host wakeup indication sent to fw
+01-15 15:30:14.820 I/[    C0] [soft_i][0xc4dd9d1a1db][20(    0): 30:15.945643] qca6750: [0:I:WMA] WLAN triggered wakeup: BPF_ALLOW (39), vdev: 0 (STA)
+01-15 15:30:14.821 I/[    C0] [soft_i][0xc4dd9d1b2fe][20(    0): 30:15.945871] qca6750: [0:I:WMA] wma_wake_event_packet: Wake event packet:
+01-15 15:30:15.979 D/ActivityManager( 2617): freezing 13601 com.google.android.projection.gearhead:projection
+01-15 15:30:15.982 D/ActivityManager( 2617): freezing 16203 com.nothing.essentialintelligence
+01-15 15:30:15.989 D/InetDiagMessage( 2617): Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+01-15 15:30:15.993 D/InetDiagMessage( 2617): Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+01-15 15:30:15.993 D/InetDiagMessage( 2617): Destroyed live tcp sockets for uids={10130} in 8ms
+01-15 15:30:15.995 D/ActivityManager( 2617): freezing 16219 com.nothing.userguide
+01-15 15:30:15.997 D/InetDiagMessage( 2617): Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+01-15 15:30:15.999 D/InetDiagMessage( 2617): Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+01-15 15:30:16.000 D/InetDiagMessage( 2617): Destroyed live tcp sockets for uids={10287} in 6ms
+01-15 15:30:16.002 D/InetDiagMessage( 2617): Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+01-15 15:30:16.004 D/InetDiagMessage( 2617): Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+01-15 15:30:16.004 D/InetDiagMessage( 2617): Destroyed live tcp sockets for uids={10141} in 4ms
+01-15 15:30:16.217 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): destroyService is called for service : com.google.android.gms/.chimera.PersistentIntentOperationService
+01-15 15:30:16.317 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s
+01-15 15:30:16.318 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:16.319 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:16.320 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:16.322 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:30:16.773 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): DeviceSleep: TX Awake, Sending SLEEP_IND
+01-15 15:30:16.773 D/vendor.qti.bluetooth@1.1-ibs_handler( 1502): SerialClockVote: vote for UART CLK OFF
+01-15 15:30:16.913 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+01-15 15:30:16.913 D/vendor.qti.bluetooth@1.1-ibs_handler( 1502): SerialClockVote: vote for UART CLK ON
+01-15 15:30:16.913 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): ProcessIbsCmd: Writing IBS_WAKE_ACK
+01-15 15:30:16.956 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+01-15 15:30:16.957 D/vendor.qti.bluetooth@1.1-ibs_handler( 1502): SerialClockVote: vote for UART CLK OFF
+01-15 15:30:17.056 I/FWAEndpointSelector(29998): Not Using E2E test http proxy or SANITIZED_CONTACT_NAME endpoint override: graph.facebook.com
+01-15 15:30:17.059 I/FWAEndToEndUtil(29998): Not In E2E test
+01-15 15:30:17.107 D/vendor.qti.bluetooth@1.1-wake_lock( 1502): Release wakelock is released 
+01-15 15:30:17.328 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s
+01-15 15:30:17.329 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:17.330 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:17.330 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:17.330 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:30:17.331 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:30:18.102 I/FWAEndpointSelector(29998): Not Using E2E test http proxy or SANITIZED_CONTACT_NAME endpoint override: graph.facebook.com
+01-15 15:30:18.102 I/FWAEndToEndUtil(29998): Not In E2E test
+01-15 15:30:18.337 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s
+01-15 15:30:18.338 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:18.339 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:18.339 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:18.340 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:30:18.341 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:30:18.467 I/NearbyMediums(13659): Found Fast Ble Advertisements :
+01-15 15:30:18.467 I/NearbyMediums(13659): BleAdvertisement { version=2, socketVersion=2, isFast=true, serviceIdHash=null, data=[ 0x23 0x47 0x56 0x38 0x36 0x11 0x32 0xf6 0x40 0x08 0x2c 0x5d 0x94 0x23 0xe8 0xda 0x2a 0xc0 0x46 0x77 0x7e 0x3b 0x4a ], deviceToken=[ 0x3a 0xb6 ], rxAdvertisement=null } : 1 times.
+01-15 15:30:18.467 I/NearbyMediums(13659): Total 1 fast advertisements from 1 unique advertisers.
+01-15 15:30:18.467 I/NearbyMediums(13659): Current Tracked Scanning Clients are : {NearbyConnections.EnvironmentMonitor, NearbySharing, NearbyConnections.TxAdvertisement}
+01-15 15:30:17.539 E/healthd ( 1518): soc_b:100, soc:100, soc_c:100, Vol:4446, Cur:-1,chg_s:1,t_l:2574,b_s:5,OffTlast:0,lcd_off:0,Vu:4994,Vw:0,pid:1518,brightness:5.565796,rmCap:4864
+01-15 15:30:17.539 E/healthd ( 1518): battery l=100 v=4446 t=27.0 h=2 st=5 c=-1831 fc=4864000 cc=97 chg=u
+01-15 15:30:17.556 E/healthd ( 1518): soc_b:100, soc:100, soc_c:100, Vol:4446, Cur:-1,chg_s:1,t_l:2574,b_s:5,OffTlast:0,lcd_off:0,Vu:4993,Vw:0,pid:1518,brightness:5.565796,rmCap:4864
+01-15 15:30:17.557 W/HealthLoop( 1518): debug.tracing.screen_brightness:5.565796
+01-15 15:30:19.347 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s
+01-15 15:30:19.348 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:19.349 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:19.349 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:19.350 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:30:19.350 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:30:19.558 I/SDM     ( 1620): DisplayBase::CommitThread: Received idle timeout, panel: video, timeout: 69999 us
+01-15 15:30:20.137 D/StNfcHal( 1992): (#0CC8B) Rx 6f 02 0f (hidden)
+01-15 15:30:20.139 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:30:20.147 D/StNfcHal( 1992): (#0CC8C) Rx 6f 02 33 (hidden)
+01-15 15:30:20.147 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:30:20.356 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s
+01-15 15:30:20.356 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:20.357 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:20.357 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:20.358 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:30:20.359 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:30:20.779 I/CNSS    ( 2024): /sys/wifi/dump_in_progress doesn't exist
+01-15 15:30:20.779 I/CNSS    ( 2024): /sys/wifi/max_chipset_log_size doesn't exist
+01-15 15:30:19.653 I/[kworke][0xc4ddf596fb8][20:30:20.778254] qca6750(18958): [18958:I:PMO] pmo_core_psoc_send_host_wakeup_ind_to_fw: Host wakeup indication sent to fw
+01-15 15:30:20.997 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+01-15 15:30:20.997 D/vendor.qti.bluetooth@1.1-ibs_handler( 1502): SerialClockVote: vote for UART CLK ON
+01-15 15:30:20.997 D/vendor.qti.bluetooth@1.1-wake_lock( 1502): Acquire wakelock is acquired 
+01-15 15:30:20.998 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): ProcessIbsCmd: Writing IBS_WAKE_ACK
+01-15 15:30:21.038 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+01-15 15:30:21.038 D/vendor.qti.bluetooth@1.1-ibs_handler( 1502): SerialClockVote: vote for UART CLK OFF
+01-15 15:30:21.191 D/vendor.qti.bluetooth@1.1-wake_lock( 1502): Release wakelock is released 
+01-15 15:30:21.367 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s
+01-15 15:30:21.368 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:21.369 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:21.370 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:21.372 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:30:22.229 D/StNfcHal( 1992): (#0CC8D) Rx 6f 02 0f (hidden)
+01-15 15:30:22.231 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:30:22.235 D/StNfcHal( 1992): (#0CC8E) Rx 6f 02 33 (hidden)
+01-15 15:30:22.236 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:30:22.381 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s
+01-15 15:30:22.382 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:22.382 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:22.383 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:22.383 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:30:22.384 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:30:22.744 I/BatteryEventDispatcherImpl(29998): [_waitingForDispatchEvent] processing BatteryEventDispatcherImpl$DispatchEvent$OnPollTimeout
+01-15 15:30:23.384 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s
+01-15 15:30:23.384 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:23.384 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:23.385 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:23.385 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:30:23.385 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:30:23.558 I/SDM     ( 1620): DisplayBase::CommitThread: Received idle timeout, panel: video, timeout: 69999 us
+01-15 15:30:23.602 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): unbindService is called for service : com.google.android.gms/.chimera.PersistentDirectBootAwareApiService and for client com.google.android.gms.persistent
+01-15 15:30:23.606 D/BoundBrokerSvc(13659): onUnbind: Intent { act=com.google.android.gms.libs.gmscorelogger.service.START dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.PersistentDirectBootAwareApiService }
+01-15 15:30:23.649 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+01-15 15:30:23.649 D/vendor.qti.bluetooth@1.1-ibs_handler( 1502): SerialClockVote: vote for UART CLK ON
+01-15 15:30:23.650 D/vendor.qti.bluetooth@1.1-wake_lock( 1502): Acquire wakelock is acquired 
+01-15 15:30:23.650 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): ProcessIbsCmd: Writing IBS_WAKE_ACK
+01-15 15:30:23.670 W/bt_btm_pm(15621): system/stack/acl/btm_pm.cc:289 BTM_ReadPowerMode: Unknown device:xx:xx:xx:xx:d2:63
+01-15 15:30:23.670 W/btm_acl (15621): system/stack/acl/btm_acl.cc:1577 BTM_ReadRemoteFeatures: Unable to find active acl
+01-15 15:30:23.670 W/bt_btm_pm(15621): system/stack/acl/btm_pm.cc:194 BTM_SetPowerMode: Unable to find power manager for peer: xx:xx:xx:xx:d2:63
+01-15 15:30:23.670 W/bluetooth(15621): system/bta/dm/bta_dm_pm.cc:1024 bta_dm_pm_active: Unable to set active power mode for device:xx:xx:xx:xx:d2:63 status:tBTM_STATUS::BTM_UNKNOWN_ADDR
+01-15 15:30:23.671 W/bt_btm_pm(15621): system/stack/acl/btm_pm.cc:289 BTM_ReadPowerMode: Unknown device:xx:xx:xx:xx:d2:63
+01-15 15:30:23.671 W/btm_acl (15621): system/stack/acl/btm_acl.cc:1577 BTM_ReadRemoteFeatures: Unable to find active acl
+01-15 15:30:23.671 W/bt_btm_pm(15621): system/stack/acl/btm_pm.cc:194 BTM_SetPowerMode: Unable to find power manager for peer: xx:xx:xx:xx:d2:63
+01-15 15:30:23.671 W/bluetooth(15621): system/bta/dm/bta_dm_pm.cc:1024 bta_dm_pm_active: Unable to set active power mode for device:xx:xx:xx:xx:d2:63 status:tBTM_STATUS::BTM_UNKNOWN_ADDR
+01-15 15:30:23.673 I/DeviceTelemetryValidationFeatureClient(29998): Received health counters for device 75:14:FA:E8:D2:63
+01-15 15:30:23.675 D/wearables::healthcounters(29998): Update batch sessionId=ba15d6cb-0ae9-4667-a822-03e7cf0449fe, batch.start=9811325, batch.end=135880545280.
+01-15 15:30:23.676 W/bt_btm_pm(15621): system/stack/acl/btm_pm.cc:289 BTM_ReadPowerMode: Unknown device:xx:xx:xx:xx:d2:63
+01-15 15:30:23.676 D/wearables::healthcounters(29998): Update batch sessionId=ba15d6cb-0ae9-4667-a822-03e7cf0449fe, batch.start=9811325, batch.end=135880545280.
+01-15 15:30:23.676 W/btm_acl (15621): system/stack/acl/btm_acl.cc:1577 BTM_ReadRemoteFeatures: Unable to find active acl
+01-15 15:30:23.676 D/wearables::healthcounters(29998): Update batch sessionId=ba15d6cb-0ae9-4667-a822-03e7cf0449fe, batch.start=9811325, batch.end=135880545280.
+01-15 15:30:23.676 W/bt_btm_pm(15621): system/stack/acl/btm_pm.cc:194 BTM_SetPowerMode: Unable to find power manager for peer: xx:xx:xx:xx:d2:63
+01-15 15:30:23.676 W/bluetooth(15621): system/bta/dm/bta_dm_pm.cc:1024 bta_dm_pm_active: Unable to set active power mode for device:xx:xx:xx:xx:d2:63 status:tBTM_STATUS::BTM_UNKNOWN_ADDR
+01-15 15:30:23.676 D/wearables::healthcounters(29998): Update batch sessionId=ba15d6cb-0ae9-4667-a822-03e7cf0449fe, batch.start=9811325, batch.end=135880545280.
+01-15 15:30:23.677 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): DeviceWakeUp: Writing IBS_WAKE_IND
+01-15 15:30:23.678 D/wearables::healthcounters(29998): Update batch sessionId=ba15d6cb-0ae9-4667-a822-03e7cf0449fe, batch.start=9811325, batch.end=135880545280.
+01-15 15:30:23.678 D/wearables::healthcounters(29998): Update batch sessionId=ba15d6cb-0ae9-4667-a822-03e7cf0449fe, batch.start=9811325, batch.end=135880545280.
+01-15 15:30:23.678 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): ProcessIbsCmd: Received IBS_WAKE_ACK: 0xFC
+01-15 15:30:23.679 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): ProcessIbsCmd: Signal wack_cond_
+01-15 15:30:23.679 D/vendor.qti.bluetooth@1.1-ibs_handler( 1502): DeviceWakeUp: Unblocked from waiting for FC, pthread_cond_timedwait ret = 0
+01-15 15:30:23.679 D/wearables::healthcounters(29998): Update batch sessionId=ba15d6cb-0ae9-4667-a822-03e7cf0449fe, batch.start=9811325, batch.end=135880545280.
+01-15 15:30:23.680 D/wearables::healthcounters(29998): Update batch sessionId=ba15d6cb-0ae9-4667-a822-03e7cf0449fe, batch.start=9811325, batch.end=135880545280.
+01-15 15:30:23.680 D/wearables::healthcounters(29998): Update batch sessionId=ba15d6cb-0ae9-4667-a822-03e7cf0449fe, batch.start=9811325, batch.end=135880545280.
+01-15 15:30:23.680 D/wearables::healthcounters(29998): Update batch sessionId=ba15d6cb-0ae9-4667-a822-03e7cf0449fe, batch.start=9811325, batch.end=135880545280.
+01-15 15:30:23.681 D/wearables::healthcounters(29998): Update batch sessionId=ba15d6cb-0ae9-4667-a822-03e7cf0449fe, batch.start=9811325, batch.end=135880545280.
+01-15 15:30:23.681 D/wearables::healthcounters(29998): Update batch sessionId=ba15d6cb-0ae9-4667-a822-03e7cf0449fe, batch.start=9811325, batch.end=135880545280.
+01-15 15:30:23.682 I/wearables::healthcounters(29998): Starting upload of %zu batches
+01-15 15:30:22.565 I/[kworke][0xc4de2ae95cb][20:30:23.690335] qca6750(24865): [24865:I:PMO] pmo_core_psoc_send_host_wakeup_ind_to_fw: Host wakeup indication sent to fw
+01-15 15:30:23.769 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+01-15 15:30:23.926 W/bt_btm_pm(15621): system/stack/acl/btm_pm.cc:289 BTM_ReadPowerMode: Unknown device:xx:xx:xx:xx:d2:63
+01-15 15:30:23.927 W/btm_acl (15621): system/stack/acl/btm_acl.cc:1577 BTM_ReadRemoteFeatures: Unable to find active acl
+01-15 15:30:23.927 W/bt_btm_pm(15621): system/stack/acl/btm_pm.cc:194 BTM_SetPowerMode: Unable to find power manager for peer: xx:xx:xx:xx:d2:63
+01-15 15:30:23.927 W/bluetooth(15621): system/bta/dm/bta_dm_pm.cc:1024 bta_dm_pm_active: Unable to set active power mode for device:xx:xx:xx:xx:d2:63 status:tBTM_STATUS::BTM_UNKNOWN_ADDR
+01-15 15:30:24.061 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+01-15 15:30:24.062 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): ProcessIbsCmd: Writing IBS_WAKE_ACK
+01-15 15:30:24.092 I/[WAC]SupernovaDeviceImpl::75:14:FA:E8:D2:63(29998): handleRTTData: Connection Monitor Round-SANITIZED_CONTACT_NAME time = 165ms
+01-15 15:30:24.094 I/[WAC]ConnectionSessionLogger(29998): Logged round SANITIZED_CONTACT_NAME time: 165
+01-15 15:30:24.129 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+01-15 15:30:24.313 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): unbindService is called for service : com.google.android.gms/.chimera.PersistentDirectBootAwareApiService and for client com.google.android.gms
+01-15 15:30:24.316 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): unbindService is called for service : com.google.android.gms/.games.chimera.GamesAndroidServiceProxy and for client com.google.android.gms
+01-15 15:30:24.316 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): size of service connections for service: com.google.android.gms/.games.chimera.GamesAndroidServiceProxyafter removal is 0
+01-15 15:30:24.316 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): size of client connections for client: com.google.android.gmsafter removal is 3
+01-15 15:30:24.316 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): destroyService is called for service : com.google.android.gms/.games.chimera.GamesAndroidServiceProxy
+01-15 15:30:24.318 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): unbindService is called for service : com.google.android.gms/.chimera.PersistentDirectBootAwareApiService and for client com.google.android.gms
+01-15 15:30:24.322 W/ProcessStats( 2617): Tracking association SourceState{f63081 com.google.android.googlequicksearchbox:googleapp/10148 BTop #401421} whose proc state 2 is better than process ProcessState{1c662f8 com.google.android.gms/10147 pkg=com.google.android.gms} proc state 14 (68 skipped)
+01-15 15:30:24.391 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s
+01-15 15:30:24.392 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:24.392 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:24.392 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:24.393 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:30:24.393 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:30:24.579 I/wearables::healthcounters(29998): Batch (start=0, end=0, sessionId=__health__, countersCount=2) uploaded successfully.
+01-15 15:30:24.634 D/NfcService( 3458): handleMessage: MSG_WATCHDOG_PING
+01-15 15:30:24.638 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): bindService is called for service : com.android.vending/com.google.android.finsky.scheduler.process.mainimpl.PhoneskyJobServiceMain and for client system
+01-15 15:30:24.638 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): total connections for service : com.android.vending/com.google.android.finsky.scheduler.process.mainimpl.PhoneskyJobServiceMainare :1
+01-15 15:30:24.638 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): total connections for client : systemare :35
+01-15 15:30:24.645 I/Finsky  (  705): [2] SCH: job service start with id 9820.
+01-15 15:30:24.652 I/Finsky  (  705): [1851] SCH: Satisfied jobs for 9820 are: 12-1
+01-15 15:30:24.653 I/Finsky  (  705): [1855] SCH: Job 12-1 starting
+01-15 15:30:24.653 I/Finsky  (  705): [2] WM::SCH: Logging work start for 12-1
+01-15 15:30:24.654 I/Finsky  (  705): [2] [ContentSync] job started
+01-15 15:30:24.670 W/bt_btm_pm(15621): system/stack/acl/btm_pm.cc:289 BTM_ReadPowerMode: Unknown device:xx:xx:xx:xx:d2:63
+01-15 15:30:24.670 W/bluetooth(15621): system/bta/jv/bta_jv_act.cc:2241 bta_jv_idle_timeout_handler: Read power mode failed: 0
+01-15 15:30:24.670 W/btm_acl (15621): system/stack/acl/btm_acl.cc:1577 BTM_ReadRemoteFeatures: Unable to find active acl
+01-15 15:30:24.774 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.google.android.uwb' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.777 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.google.android.widevine.nonupdatable' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.778 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.android.nfcservices' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.791 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.google.android.devicelock' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.803 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.android.apex.cts.shim' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.811 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.google.android.appsearch' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.813 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.google.android.art' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.816 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.android.bt' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.826 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.google.android.mediaprovider' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.835 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.android.virt' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.837 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.google.android.resolv' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.843 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.google.android.configinfrastructure' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.843 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.google.android.media' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.853 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.android.vndk.v34' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.858 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.android.crashrecovery' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.864 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.google.android.sdkext' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.869 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.google.android.adservices' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.870 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.google.android.tethering' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.877 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.android.runtime' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.884 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.google.android.cellbroadcast' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.889 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.google.android.rkpd' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.914 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.android.compos' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.916 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.google.android.tzdata6' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.925 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.google.android.permission' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.928 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): DeviceSleep: TX Awake, Sending SLEEP_IND
+01-15 15:30:24.928 D/vendor.qti.bluetooth@1.1-ibs_handler( 1502): SerialClockVote: vote for UART CLK OFF
+01-15 15:30:24.931 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.google.android.wifi' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.964 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.google.android.media.swcodec' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.964 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.android.uprobestats' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.968 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.android.profiling' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.986 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.google.android.adbd' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.994 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.android.i18n' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:24.997 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.google.android.conscrypt' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:25.006 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.google.android.neuralnetworks' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:25.011 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.google.android.ipsec' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:25.015 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.google.android.ondevicepersonalization' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:25.018 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.google.android.healthfitness' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:25.029 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.google.android.extservices' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:25.040 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.google.android.os.statsd' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:25.048 W/Finsky  (  705): [2] STU: Failed to get storage stats for package 'com.google.android.scheduling' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+01-15 15:30:25.055 I/Finsky  (  705): [2] App states replicator found 4 unowned apps
+01-15 15:30:25.071 I/Finsky  (  705): [251] Completed 0 account content syncs with 0 successful.
+01-15 15:30:25.071 I/Finsky  (  705): [2] [ContentSync] Installation state replication succeeded.
+01-15 15:30:25.071 I/Finsky  (  705): [2] SCH: jobFinished: 12-1. TimeElapsed: 418ms.
+01-15 15:30:25.071 I/Finsky  (  705): [2] WM::SCH: Logging work end for 12-1
+01-15 15:30:25.078 D/vendor.qti.bluetooth@1.1-wake_lock( 1502): Release wakelock is released 
+01-15 15:30:25.080 I/Finsky  (  705): [251] SCH: Scheduling phonesky job Id: 1-1337, CT: 1768476175836, Constraints: [{ L: 43165905, D: 86365905, C: CHARGING_NONE, I: IDLE_NONE, N: NET_ANY, B: BATTERY_ANY }]
+01-15 15:30:25.081 I/Finsky  (  705): [251] SCH: Scheduling phonesky job Id: 34-57, CT: 1768433106518, Constraints: [{ L: 604800000, D: 2570414511, C: CHARGING_NONE, I: IDLE_NONE, N: NET_ANY, B: BATTERY_ANY }]
+01-15 15:30:25.081 I/Finsky  (  705): [251] SCH: Scheduling phonesky job Id: 34-60, CT: 1768490734969, Constraints: [{ L: 79199736, D: 1375199736, C: CHARGING_NONE, I: IDLE_NONE, N: NET_ANY, B: BATTERY_ANY }]
+01-15 15:30:25.081 I/Finsky  (  705): [251] SCH: Scheduling phonesky job Id: 34-61, CT: 1768490735222, Constraints: [{ L: 604800000, D: 2591999764, C: CHARGING_NONE, I: IDLE_NONE, N: NET_ANY, B: BATTERY_ANY }]
+01-15 15:30:25.084 I/Finsky  (  705): [249] SCH: Scheduling 1 system job(s)
+01-15 15:30:25.084 I/Finsky  (  705): [249] SCH: Scheduling system job Id: 9826, L: 10316657, D: 53516657, C: false, I: false, N: 1
+01-15 15:30:25.090 I/Finsky  (  705): [1855] SCH: job service finished with id 9820.
+01-15 15:30:25.092 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): unbindService is called for service : com.android.vending/com.google.android.finsky.scheduler.process.mainimpl.PhoneskyJobServiceMain and for client system
+01-15 15:30:25.092 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): size of service connections for service: com.android.vending/com.google.android.finsky.scheduler.process.mainimpl.PhoneskyJobServiceMainafter removal is 0
+01-15 15:30:25.092 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): size of client connections for client: systemafter removal is 34
+01-15 15:30:25.092 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): destroyService is called for service : com.android.vending/com.google.android.finsky.scheduler.process.mainimpl.PhoneskyJobServiceMain
+01-15 15:30:25.212 D/StNfcHal( 1992): (#0CC8F) Rx 6f 02 0f (hidden)
+01-15 15:30:25.213 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:30:25.221 D/StNfcHal( 1992): (#0CC90) Rx 6f 02 33 (hidden)
+01-15 15:30:25.221 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:30:25.400 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s
+01-15 15:30:25.401 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:25.402 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:25.403 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:30:25.403 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:30:25.404 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:30:25.571 I/wearables::healthcounters(29998): Batch (start=9811325, end=135880545280, sessionId=ba15d6cb-0ae9-4667-a822-03e7cf0449fe, countersCount=12) uploaded successfully.
+01-15 15:30:25.571 I/wearables::healthcounters(29998): Upload complete: %d succeeded, %d failed out of %zu total batches
+01-15 15:30:26.411 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s

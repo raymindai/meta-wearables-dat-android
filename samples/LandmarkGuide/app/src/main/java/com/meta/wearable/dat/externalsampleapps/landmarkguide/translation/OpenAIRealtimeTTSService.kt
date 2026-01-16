@@ -73,15 +73,23 @@ class OpenAIRealtimeTTSService(private val context: Context) {
     
     // Callbacks
     var onTranslation: ((String) -> Unit)? = null
+    var onTranslationDelta: ((String) -> Unit)? = null  // For streaming translation text
     var onSpeechStart: (() -> Unit)? = null
     var onSpeechEnd: (() -> Unit)? = null
     var onError: ((String) -> Unit)? = null
     
+    // Track current translation text for streaming
+    private var currentTranslationText = ""
+    
     private var sourceLanguage = "Korean"
     private var targetLanguage = "English"
+    var currentSourceLangCode = ""  // Track current source language code (public for connection check)
+    var currentTargetLangCode = ""  // Track current target language code (public for connection check)
+    var ttsEnabled = true  // TTS enabled by default for peer messages
     
     /**
      * Connect to OpenAI Realtime API
+     * Reconnects if language pair changed
      */
     fun connect(sourceLang: String, targetLang: String) {
         if (apiKey.isBlank()) {
@@ -90,11 +98,23 @@ class OpenAIRealtimeTTSService(private val context: Context) {
             return
         }
         
-        if (isConnected) {
-            Log.w(TAG, "⚠️ Already connected")
+        // Check if language changed - if so, reconnect
+        val sourceLangCode = sourceLang.lowercase()
+        val targetLangCode = targetLang.lowercase()
+        
+        if (isConnected && currentSourceLangCode == sourceLangCode && currentTargetLangCode == targetLangCode) {
+            Log.d(TAG, "✅ Already connected with same language pair ($sourceLangCode → $targetLangCode)")
             return
         }
         
+        // Language changed or not connected - reconnect
+        if (isConnected) {
+            Log.d(TAG, "🔄 Language changed from ($currentSourceLangCode → $currentTargetLangCode) to ($sourceLangCode → $targetLangCode), reconnecting...")
+            disconnect()
+        }
+        
+        currentSourceLangCode = sourceLangCode
+        currentTargetLangCode = targetLangCode
         sourceLanguage = LANGUAGE_NAMES[sourceLang] ?: "Korean"
         targetLanguage = LANGUAGE_NAMES[targetLang] ?: "English"
         
@@ -144,11 +164,34 @@ class OpenAIRealtimeTTSService(private val context: Context) {
                     put("text")
                     put("audio")
                 })
+                put("tools", JSONArray())  // No tools allowed - prevents function calling
+                put("tool_choice", "none")  // Explicitly disable tool usage
                 put("instructions", """
-                    You are a translator. I will send you text in $sourceLanguage.
-                    Translate it to $targetLanguage and respond with ONLY the translation.
-                    Keep responses short and natural for speech.
-                    Do not add any explanations or extra text.
+                    You are a TRANSLATION-ONLY service. Your ONLY job is to translate text from $sourceLanguage to $targetLanguage.
+                    
+                    CRITICAL RULES - VIOLATION WILL CAUSE SYSTEM FAILURE:
+                    1. NEVER engage in conversation - you are NOT a chatbot
+                    2. NEVER answer questions - you are NOT an assistant
+                    3. NEVER provide explanations - you are NOT a teacher
+                    4. NEVER add commentary - you are NOT a commentator
+                    5. NEVER respond to greetings - you are NOT a person
+                    6. NEVER ask questions - you are NOT curious
+                    7. NEVER introduce yourself - you have NO identity
+                    8. NEVER state your name - you have NO name
+                    9. ONLY output the direct translation of the input text - word for word translation
+                    10. If someone asks "what is your name", translate it to $targetLanguage - do NOT answer
+                    11. If someone asks "who are you", translate it to $targetLanguage - do NOT answer
+                    12. If someone asks any question, translate the question - do NOT answer it
+                    13. If someone says "hello", translate it to $targetLanguage - do NOT greet back
+                    14. If someone asks "how are you", translate it to $targetLanguage - do NOT answer
+                    
+                    Input language MUST be $sourceLanguage. Output language MUST be $targetLanguage. No exceptions.
+                    
+                    You are a MACHINE TRANSLATOR. You have NO personality. You have NO opinions. You have NO knowledge beyond translation.
+                    You are NOT an assistant. You are NOT a chatbot. You are NOT a person. You are NOT ChatGPT. You are ONLY a translator.
+                    
+                    REMEMBER: If you engage in conversation, answer questions, provide explanations, or introduce yourself, the system will fail.
+                    Your response must ALWAYS be ONLY the translation of the input text. Nothing else.
                 """.trimIndent())
                 put("voice", "alloy")
                 put("output_audio_format", "pcm16")
@@ -157,7 +200,7 @@ class OpenAIRealtimeTTSService(private val context: Context) {
         }
         
         webSocket?.send(sessionConfig.toString())
-        Log.d(TAG, "📤 Session configured")
+        Log.d(TAG, "📤 Session configured for $sourceLanguage → $targetLanguage (STRICT TRANSLATION MODE)")
     }
     
     private fun handleMessage(text: String) {
@@ -173,21 +216,36 @@ class OpenAIRealtimeTTSService(private val context: Context) {
                     Log.d(TAG, "✅ Session ready")
                     _isReady.value = true
                 }
+                "response.text.delta", "response.text.done", "response.item.created" -> {
+                    // BLOCK any text responses - AI trying to have a conversation
+                    val content = json.optString("delta", "") + json.optString("content", "")
+                    Log.w(TAG, "🚫 BLOCKED AI conversational response attempt: $type - '$content'")
+                    // Do NOT process - this is an AI trying to answer questions or have a conversation
+                    return
+                }
                 "response.audio_transcript.delta" -> {
                     val delta = json.optString("delta", "")
-                    _translatedText.value += delta
+                    currentTranslationText += delta
+                    _translatedText.value = currentTranslationText
+                    // Stream translation text as it arrives (for UI update)
+                    onTranslationDelta?.invoke(currentTranslationText)
                 }
                 "response.audio_transcript.done" -> {
                     val transcript = json.optString("transcript", "")
-                    Log.d(TAG, "🌐 Translation: $transcript")
+                    Log.d(TAG, "🌐 Translation complete: $transcript")
+                    currentTranslationText = transcript
                     _translatedText.value = transcript
+                    // Final translation callback
                     onTranslation?.invoke(transcript)
                 }
                 "response.audio.delta" -> {
+                    // Only play audio if TTS is enabled
+                    if (ttsEnabled) {
                     val audioBase64 = json.optString("delta", "")
                     if (audioBase64.isNotBlank()) {
                         val audioBytes = Base64.decode(audioBase64, Base64.DEFAULT)
                         playAudioChunk(audioBytes)
+                        }
                     }
                 }
                 "response.audio.done" -> {
@@ -219,6 +277,8 @@ class OpenAIRealtimeTTSService(private val context: Context) {
             return
         }
         
+        // Reset translation text for new request
+        currentTranslationText = ""
         _translatedText.value = ""
         
         // Create conversation item with text
@@ -262,6 +322,9 @@ class OpenAIRealtimeTTSService(private val context: Context) {
                 return
             }
             
+            // Use larger buffer to prevent audio dropouts (8x buffer size)
+            val actualBufferSize = bufferSize * 8
+            
             audioTrack = AudioTrack.Builder()
                 .setAudioAttributes(
                     AudioAttributes.Builder()
@@ -276,7 +339,7 @@ class OpenAIRealtimeTTSService(private val context: Context) {
                         .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
                         .build()
                 )
-                .setBufferSizeInBytes(bufferSize * 4)
+                .setBufferSizeInBytes(actualBufferSize)
                 .setTransferMode(AudioTrack.MODE_STREAM)
                 .build()
             
@@ -285,7 +348,7 @@ class OpenAIRealtimeTTSService(private val context: Context) {
             audioManager.isBluetoothScoOn = true
             
             audioTrack?.play()
-            Log.d(TAG, "✅ AudioTrack setup complete")
+            Log.d(TAG, "✅ AudioTrack setup complete (buffer: $actualBufferSize bytes)")
         } catch (e: Exception) {
             Log.e(TAG, "❌ AudioTrack setup failed: ${e.message}", e)
         }
@@ -293,18 +356,50 @@ class OpenAIRealtimeTTSService(private val context: Context) {
     
     private fun playAudioChunk(audioData: ByteArray) {
         try {
+            synchronized(this) {
             val track = audioTrack
             if (track != null && track.state == AudioTrack.STATE_INITIALIZED) {
-                scope.launch {
                     try {
-                        track.write(audioData, 0, audioData.size)
+                        // Ensure track is playing
+                        if (track.playState != AudioTrack.PLAYSTATE_PLAYING) {
+                            track.play()
+                        }
+                        
+                        // Write audio data - retry if buffer is full
+                        var bytesWritten = 0
+                        var retries = 0
+                        while (bytesWritten < audioData.size && retries < 10) {
+                            val written = track.write(
+                                audioData, 
+                                bytesWritten, 
+                                audioData.size - bytesWritten
+                            )
+                            
+                            if (written < 0) {
+                                Log.e(TAG, "❌ AudioTrack write error: $written")
+                                break
+                            } else if (written == 0) {
+                                // Buffer full, wait a bit and retry
+                                retries++
+                                Thread.sleep(10)
+                            } else {
+                                bytesWritten += written
+                                retries = 0
+                            }
+                        }
+                        
+                        if (bytesWritten < audioData.size) {
+                            Log.w(TAG, "⚠️ Only wrote $bytesWritten/${audioData.size} bytes")
+                        }
                     } catch (e: Exception) {
-                        Log.e(TAG, "❌ AudioTrack write failed: ${e.message}")
+                        Log.e(TAG, "❌ AudioTrack write failed: ${e.message}", e)
                     }
+                } else {
+                    Log.w(TAG, "⚠️ AudioTrack not initialized, skipping audio chunk")
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "❌ playAudioChunk error: ${e.message}")
+            Log.e(TAG, "❌ playAudioChunk error: ${e.message}", e)
         }
     }
     

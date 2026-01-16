@@ -7,7 +7,11 @@ package com.meta.wearable.dat.externalsampleapps.landmarkguide.translation
 
 import android.util.Base64
 import android.util.Log
-import com.meta.wearable.dat.externalsampleapps.landmarkguide.BuildConfig
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ServerValue
+import com.google.firebase.database.ValueEventListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -18,9 +22,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -33,7 +36,17 @@ class GoogleSpeechService {
     
     companion object {
         private const val TAG = "GoogleSTT"
-        private const val API_URL = "https://speech.googleapis.com/v1/speech:recognize"
+        /**
+         * IMPORTANT:
+         * Speech-to-Text v2 (including Chirp 3) requires IAM-authenticated requests.
+         * API key calls from Android will fail with `speech.recognizers.recognize` PERMISSION_DENIED.
+         *
+         * So we call an HTTPS Firebase Function proxy (`sttRecognizeV2`) that runs with a service account.
+         */
+        // Prefer DB-triggered STT v2 (no public HTTPS invoker needed due to org policy).
+        private const val DEFAULT_STT_LOCATION = "asia-northeast1"
+        private const val DEFAULT_MODEL = "chirp_3"
+        private const val AUDIO_SAMPLE_RATE_HZ = 8000
         
         // Language codes for Google STT
         val LANGUAGE_CODES = mapOf(
@@ -43,20 +56,23 @@ class GoogleSpeechService {
             "es" to "es-ES"
         )
         
-        // VAD settings
-        private const val SILENCE_THRESHOLD = 500   // RMS threshold for silence
-        private const val SILENCE_DURATION_MS = 800 // 800ms of silence = end of phrase
-        private const val MIN_SPEECH_MS = 500       // Minimum speech before processing
-        private const val MAX_AUDIO_MS = 15000      // Max 15 seconds before force processing
+        // VAD settings - OPTIMIZED for low latency
+        private const val SILENCE_THRESHOLD = 400   // RMS threshold for silence (lowered for sensitivity)
+        // Tune for lower perceived latency (send smaller chunks more frequently)
+        private const val SILENCE_DURATION_MS = 250 // 250ms of silence = end of phrase
+        private const val MIN_SPEECH_MS = 150       // Minimum speech before processing
+        private const val MAX_AUDIO_MS = 3500       // Force process after 3.5s max
     }
     
-    private val apiKey = BuildConfig.GOOGLE_CLOUD_API_KEY
-    
     private val client = OkHttpClient.Builder()
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .writeTimeout(30, TimeUnit.SECONDS)
+        .connectTimeout(10, TimeUnit.SECONDS)  // Faster connection timeout
+        .readTimeout(15, TimeUnit.SECONDS)
+        .writeTimeout(15, TimeUnit.SECONDS)
         .build()
+
+    private val db = FirebaseDatabase.getInstance()
+    private val sttRequestsRef = db.getReference("sttRequests")
+    private val sttResponsesRef = db.getReference("sttResponses")
     
     private val scope = CoroutineScope(Dispatchers.IO + Job())
     private val audioBuffer = ConcurrentLinkedQueue<ByteArray>()
@@ -84,12 +100,6 @@ class GoogleSpeechService {
      * Start listening
      */
     fun startListening(languageCode: String) {
-        if (apiKey.isBlank()) {
-            Log.e(TAG, "❌ Google Cloud API Key not configured")
-            onError?.invoke("Google Cloud API Key not configured")
-            return
-        }
-        
         // Support "auto" for auto-detection
         currentLanguage = when (languageCode) {
             "auto" -> "auto"
@@ -174,7 +184,8 @@ class GoogleSpeechService {
             
             if (shouldProcess && accumulatedAudio.isNotEmpty()) {
                 val combinedAudio = combineAudioChunks(accumulatedAudio)
-                val audioDurationMs = (combinedAudio.size / 32)  // 16kHz * 2 bytes = 32 bytes/ms
+                // bytes/ms = sampleRateHz * 2 bytes / 1000. For 8kHz mono PCM16 => 16 bytes/ms
+                val audioDurationMs = (combinedAudio.size / 16)
                 
                 Log.d(TAG, "📤 Processing ${audioDurationMs}ms of audio (silence: ${silenceDuration}ms)")
                 
@@ -187,7 +198,7 @@ class GoogleSpeechService {
                 transcribeAudio(combinedAudio)
             }
             
-            delay(50)  // 50ms polling interval
+            delay(30)  // 30ms polling interval (was 50ms)
         }
         
         // Process remaining audio on stop
@@ -215,84 +226,106 @@ class GoogleSpeechService {
         try {
             val audioBase64 = Base64.encodeToString(audioData, Base64.NO_WRAP)
             
-            val requestJson = JSONObject().apply {
-                put("config", JSONObject().apply {
-                    put("encoding", "LINEAR16")
-                    put("sampleRateHertz", 16000)
-                    put("languageCode", if (currentLanguage == "auto") "en-US" else currentLanguage)
-                    put("enableAutomaticPunctuation", true)
-                    put("model", "latest_long")
-                    
-                    // Auto-detect: add alternative languages
-                    if (currentLanguage == "auto") {
-                        put("alternativeLanguageCodes", org.json.JSONArray().apply {
+            val langs = if (currentLanguage == "auto") {
+                org.json.JSONArray().apply {
+                    put("ko-KR")
+                    put("en-US")
                             put("ar-SA")
-                            put("ko-KR")
                             put("es-ES")
-                        })
-                    }
-                })
-                put("audio", JSONObject().apply {
-                    put("content", audioBase64)
-                })
+                }
+            } else {
+                org.json.JSONArray().apply { put(currentLanguage) }
             }
-            
-            val requestBody = requestJson.toString()
-                .toRequestBody("application/json".toMediaType())
-            
-            val request = Request.Builder()
-                .url("$API_URL?key=$apiKey")
-                .post(requestBody)
-                .build()
-            
+
+            // DB-triggered STT v2 request (no HTTPS invoker needed)
+            val requestId = sttRequestsRef.push().key
+            if (requestId.isNullOrBlank()) {
+                onError?.invoke("Failed to create STT request id")
+                return
+            }
+
+            val requestMap = mapOf(
+                "audioContentBase64" to audioBase64,
+                "languageCodes" to (0 until langs.length()).map { langs.getString(it) },
+                "model" to DEFAULT_MODEL,
+                "location" to DEFAULT_STT_LOCATION,
+                "sampleRateHertz" to AUDIO_SAMPLE_RATE_HZ,
+                "createdAt" to ServerValue.TIMESTAMP
+            )
+
+            Log.d(TAG, "📤 STT v2 request → RTDB /sttRequests/$requestId (lang=$currentLanguage)")
+
+            // Write request
+            val writeLatch = CountDownLatch(1)
+            var writeError: String? = null
+            sttRequestsRef.child(requestId).setValue(requestMap)
+                .addOnSuccessListener { writeLatch.countDown() }
+                .addOnFailureListener { e ->
+                    writeError = e.message
+                    writeLatch.countDown()
+                }
+
+            if (!writeLatch.await(5, TimeUnit.SECONDS)) {
+                onError?.invoke("STT request write timeout")
+                return
+            }
+            if (writeError != null) {
+                onError?.invoke("STT request write failed: $writeError")
+                return
+            }
+
+            // Wait for response
             val startTime = System.currentTimeMillis()
-            val response = client.newCall(request).execute()
-            val responseBody = response.body?.string()
+            val responseLatch = CountDownLatch(1)
+            val responseHolder = arrayOfNulls<String>(1)
+
+            // We store a JSON-like map in RTDB; easiest is to read raw snapshot as JSON via toString()
+            sttResponsesRef.child(requestId).addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    if (!snapshot.exists()) return
+                    responseHolder[0] = snapshot.value?.let { JSONObject.wrap(it)?.toString() ?: "{}" } ?: "{}"
+                    responseLatch.countDown()
+                    sttResponsesRef.child(requestId).removeEventListener(this)
+                }
+                override fun onCancelled(error: DatabaseError) {
+                    responseHolder[0] = JSONObject().apply {
+                        put("error", "db_cancelled")
+                        put("details", error.message)
+                    }.toString()
+                    responseLatch.countDown()
+                    sttResponsesRef.child(requestId).removeEventListener(this)
+                }
+            })
+
+            if (!responseLatch.await(25, TimeUnit.SECONDS)) {
+                onError?.invoke("STT response timeout")
+                return
+            }
+
             val latency = System.currentTimeMillis() - startTime
-            
-            if (!response.isSuccessful) {
-                Log.e(TAG, "❌ API error: ${response.code} - $responseBody")
-                onError?.invoke("Google API: ${response.code}")
+            val responseBody = responseHolder[0] ?: "{}"
+            val json = JSONObject(responseBody)
+
+            val err = json.optString("error", "")
+            if (err.isNotBlank()) {
+                Log.e(TAG, "❌ STT v2 error (DB): $responseBody")
+                onError?.invoke("STT v2 error: $err")
                 return
             }
             
-            val json = JSONObject(responseBody ?: "{}")
-            val results = json.optJSONArray("results")
-            
-            if (results != null && results.length() > 0) {
-                // Combine all results for the full transcription
-                val fullTranscript = StringBuilder()
-                var detectedLanguage: String? = null
-                
-                for (i in 0 until results.length()) {
-                    val result = results.getJSONObject(i)
-                    
-                    // Get detected language (if auto-detect enabled)
-                    if (detectedLanguage == null) {
-                        detectedLanguage = result.optString("languageCode", null)
-                    }
-                    
-                    val alternatives = result.optJSONArray("alternatives")
-                    if (alternatives != null && alternatives.length() > 0) {
-                        val transcript = alternatives.getJSONObject(0).optString("transcript", "")
-                        fullTranscript.append(transcript)
-                    }
-                }
-                
-                val transcript = fullTranscript.toString().trim()
+            val transcript = json.optString("transcript", "").trim()
+            val detectedLanguage = json.optString("languageCode", "").takeIf { it.isNotBlank() }
+
                 if (transcript.isNotBlank()) {
-                    // If auto-detect, log and callback detected language
-                    if (currentLanguage == "auto" && detectedLanguage != null) {
+                if (currentLanguage == "auto" && !detectedLanguage.isNullOrBlank()) {
                         Log.d(TAG, "🌐 Detected language: $detectedLanguage")
                         onLanguageDetected?.invoke(detectedLanguage)
                     }
-                    
                     Log.d(TAG, "📝 Transcript (${latency}ms): $transcript")
                     _transcription.value = transcript
                     onTranscript?.invoke(transcript, true)
-                }
             } else {
-                Log.d(TAG, "🔇 No speech detected")
+                Log.d(TAG, "🔇 Empty transcript (DB response): $responseBody")
             }
         } catch (e: Exception) {
             Log.e(TAG, "❌ Transcription error: ${e.message}", e)

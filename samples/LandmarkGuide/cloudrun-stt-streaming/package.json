@@ -1,0 +1,19 @@
+{
+  "name": "stt-streaming",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloud Run WebSocket bridge to Google Speech-to-Text v2 StreamingRecognize (chirp_3)",
+  "main": "server.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@google-cloud/speech": "^6.7.0",
+    "google-auth-library": "^9.15.1",
+    "ws": "^8.16.0"
+  }
+}
+

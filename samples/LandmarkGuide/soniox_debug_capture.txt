@@ -1,0 +1,476 @@
+--------- beginning of main
+01-15 15:27:49.975 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+01-15 15:27:49.975 D/vendor.qti.bluetooth@1.1-ibs_handler( 1502): SerialClockVote: vote for UART CLK ON
+01-15 15:27:49.975 D/vendor.qti.bluetooth@1.1-wake_lock( 1502): Acquire wakelock is acquired 
+01-15 15:27:49.975 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): ProcessIbsCmd: Writing IBS_WAKE_ACK
+01-15 15:27:49.987 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s
+01-15 15:27:49.988 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:49.989 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:49.989 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:49.991 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:27:50.017 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+01-15 15:27:50.017 D/vendor.qti.bluetooth@1.1-ibs_handler( 1502): SerialClockVote: vote for UART CLK OFF
+--------- beginning of kernel
+01-15 15:27:48.926 I/logd    (  791): logdr: UID=2000 GID=2000 PID=25389 b tail=0 logMask=99 pid=0 start=0ns deadline=0ns
+01-15 15:27:50.168 D/vendor.qti.bluetooth@1.1-wake_lock( 1502): Release wakelock is released 
+01-15 15:27:50.211 I/CNSS    ( 2024): /sys/wifi/dump_in_progress doesn't exist
+01-15 15:27:50.211 I/CNSS    ( 2024): /sys/wifi/max_chipset_log_size doesn't exist
+01-15 15:27:50.444 D/MajlisRoom(25067): 🎧 audio(size=640) route: useGoogleSTT=true sonioxConnected=false useRealtime=false realtimeConnected=false useVosk=false deepgramConnected=false
+01-15 15:27:49.576 I/[kworke][0xc4d3399779d][20:27:50.700920] qca6750(18958): [18958:I:PMO] pmo_core_psoc_send_host_wakeup_ind_to_fw: Host wakeup indication sent to fw
+01-15 15:27:50.729 W/dataInfoSend( 3936): type=1400 audit(0.0:744853998): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:50.729 W/dataInfoSend( 3936): type=1400 audit(0.0:744853999): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:50.729 W/dataInfoSend( 3936): type=1400 audit(0.0:744854000): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:50.729 W/dataInfoSend( 3936): type=1400 audit(0.0:744854001): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:50.729 W/dataInfoSend( 3936): type=1400 audit(0.0:744854002): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:49.610 W/audit   (18643): audit_lost=743603783 audit_rate_limit=5 audit_backlog_limit=64
+01-15 15:27:49.610 E/audit   (18643): rate limit exceeded
+01-15 15:27:50.781 I/SDM     ( 1620): DisplayBase::CommitThread: Received idle timeout, panel: video, timeout: 70000 us
+01-15 15:27:50.996 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s
+01-15 15:27:50.998 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:50.998 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:50.999 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:50.999 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:27:51.000 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:27:51.480 D/MajlisRoom(25067): 🎧 audio(size=640) route: useGoogleSTT=true sonioxConnected=false useRealtime=false realtimeConnected=false useVosk=false deepgramConnected=false
+01-15 15:27:51.773 W/dataInfoSend( 3936): type=1400 audit(0.0:744856979): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:51.773 W/dataInfoSend( 3936): type=1400 audit(0.0:744856980): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:51.773 W/dataInfoSend( 3936): type=1400 audit(0.0:744856981): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:51.773 W/dataInfoSend( 3936): type=1400 audit(0.0:744856982): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:51.773 W/dataInfoSend( 3936): type=1400 audit(0.0:744856983): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:50.649 W/audit   (18643): audit_lost=743606759 audit_rate_limit=5 audit_backlog_limit=64
+01-15 15:27:50.649 E/audit   (18643): rate limit exceeded
+01-15 15:27:51.876 D/StNfcHal( 1992): (#0CB43) Rx 6f 02 0f (hidden)
+01-15 15:27:51.876 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:51.885 D/StNfcHal( 1992): (#0CB44) Rx 6f 02 28 (hidden)
+01-15 15:27:51.885 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:51.895 D/StNfcHal( 1992): (#0CB45) Rx 6f 02 19 (hidden)
+01-15 15:27:51.895 D/StNfcHal( 1992): HalStopTimer 
+--------- beginning of system
+01-15 15:27:51.925 D/NtMemoryManager( 2617): com.android.settings last pss: 389768
+01-15 15:27:51.926 D/NtMemoryManager( 2617): com.expressvpn.vpn last pss: 481516
+01-15 15:27:51.927 D/NtMemoryManager( 2617): com.facebook.stella last pss: 917972
+01-15 15:27:51.927 D/NtMemoryManager( 2617): com.android.vending last pss: 555124
+01-15 15:27:51.927 D/NtMemoryManager( 2617): com.google.android.googlequicksearchbox last pss: 185472
+01-15 15:27:51.927 D/NtMemoryManager( 2617): com.blogspot.newapphorizons.fakegps last pss: 305648
+01-15 15:27:51.930 D/StNfcHal( 1992): (#0CB46) Rx 6f 02 11 (hidden)
+01-15 15:27:51.930 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:51.943 D/StNfcHal( 1992): (#0CB47) Rx 6f 02 0f (hidden)
+01-15 15:27:51.944 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:51.953 D/StNfcHal( 1992): (#0CB48) Rx 6f 02 09 (hidden)
+01-15 15:27:51.954 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:52.008 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s
+01-15 15:27:52.009 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:52.010 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:52.010 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:52.010 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:27:52.011 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:27:52.210 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): bindService is called for service : com.google.android.gms/.tapandpay.globalactions.WalletQuickAccessWalletService and for client com.android.systemui
+01-15 15:27:52.210 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): total connections for service : com.google.android.gms/.tapandpay.globalactions.WalletQuickAccessWalletServiceare :1
+01-15 15:27:52.210 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): total connections for client : com.android.systemuiare :4
+01-15 15:27:52.211 D/BackgroundInstallControlService( 2617): Package event received: 0
+01-15 15:27:52.226 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): bindService is called for service : com.google.android.gms/.chimera.GmsApiService and for client com.google.android.gms.persistent
+01-15 15:27:52.226 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): total connections for service : com.google.android.gms/.chimera.GmsApiServiceare :3
+01-15 15:27:52.226 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): total connections for client : com.google.android.gms.persistentare :7
+01-15 15:27:52.226 D/OomAdjuster( 2617): process : com.google.android.gms, pid = 26684, isTop = false, uid = 10147, hasActivity = false
+01-15 15:27:52.227 D/OomAdjuster( 2617): process : com.google.android.gms is not top!
+01-15 15:27:52.235 D/ActivityManager( 2617): sync unfroze 26684 com.google.android.gms for 4
+01-15 15:27:52.248 D/HWUI    (13659): --- Failed to create image decoder with message 'unimplemented'
+01-15 15:27:52.248 W/BitmapDrawable(13659): BitmapDrawable created with null Bitmap
+01-15 15:27:52.248 I/QAWalletSvc(13659): QAW tile tap fix enabled, using home intent for placeholder. [CONTEXT service_id=79 ]
+01-15 15:27:52.263 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): bindService is called for service : com.google.android.gms/.chimera.PersistentDirectBootAwareApiService and for client com.google.android.gms.persistent
+01-15 15:27:52.263 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): total connections for service : com.google.android.gms/.chimera.PersistentDirectBootAwareApiServiceare :22
+01-15 15:27:52.263 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): total connections for client : com.google.android.gms.persistentare :7
+01-15 15:27:52.275 I/QuickAccessWalletTile( 3231): Successfully retrieved wallet cards.
+01-15 15:27:52.371 D/StNfcHal( 1992): (#0CB49) Rx 6f 02 09 (hidden)
+01-15 15:27:52.372 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:52.380 D/StNfcHal( 1992): (#0CB4A) Rx 6f 02 0d (hidden)
+01-15 15:27:52.380 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:52.390 D/StNfcHal( 1992): (#0CB4B) Rx 6f 02 0f (hidden)
+01-15 15:27:52.390 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:52.416 D/StNfcHal( 1992): (#0CB4C) Rx 6f 02 11 (hidden)
+01-15 15:27:52.418 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:52.430 D/StNfcHal( 1992): (#0CB4D) Rx 6f 02 0f (hidden)
+01-15 15:27:52.431 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:52.440 D/StNfcHal( 1992): (#0CB4E) Rx 6f 02 09 (hidden)
+01-15 15:27:52.440 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:52.449 I/gle.android.gms(26684): Explicit concurrent mark compact GC freed 6531KB AllocSpace bytes, 14(600KB) LOS objects, 50% free, 17MB/35MB, paused 817us,2.774ms total 203.829ms
+01-15 15:27:52.525 D/MajlisRoom(25067): 🎧 audio(size=640) route: useGoogleSTT=true sonioxConnected=false useRealtime=false realtimeConnected=false useVosk=false deepgramConnected=false
+01-15 15:27:52.583 I/BatteryEventDispatcherImpl(29998): [_waitingForDispatchEvent] processing BatteryEventDispatcherImpl$DispatchEvent$OnPollTimeout
+01-15 15:27:52.781 I/device_iot_config(15621): system/device/src/device_iot_config_int.cc:190 device_iot_config_write: evt=1
+01-15 15:27:52.813 W/dataInfoSend( 3936): type=1400 audit(0.0:744859960): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:52.813 W/dataInfoSend( 3936): type=1400 audit(0.0:744859961): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:52.813 W/dataInfoSend( 3936): type=1400 audit(0.0:744859962): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:52.813 W/dataInfoSend( 3936): type=1400 audit(0.0:744859963): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:52.813 W/dataInfoSend( 3936): type=1400 audit(0.0:744859964): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:51.693 W/audit   (18643): audit_lost=743609735 audit_rate_limit=5 audit_backlog_limit=64
+01-15 15:27:51.693 E/audit   (18643): rate limit exceeded
+01-15 15:27:52.857 D/StNfcHal( 1992): (#0CB4F) Rx 6f 02 0a (hidden)
+01-15 15:27:52.857 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:52.866 D/StNfcHal( 1992): (#0CB50) Rx 6f 02 3a (hidden)
+01-15 15:27:52.867 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:53.017 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s
+01-15 15:27:53.018 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:53.018 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:53.019 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:53.019 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:27:53.019 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:27:53.035 D/NtMemoryManager( 2617): com.android.settings last pss: 389768
+01-15 15:27:53.036 D/NtMemoryManager( 2617): com.expressvpn.vpn last pss: 481516
+01-15 15:27:53.036 D/NtMemoryManager( 2617): com.facebook.stella last pss: 917972
+01-15 15:27:53.036 D/NtMemoryManager( 2617): com.android.vending last pss: 555124
+01-15 15:27:53.036 D/NtMemoryManager( 2617): com.google.android.googlequicksearchbox last pss: 185472
+01-15 15:27:53.036 D/NtMemoryManager( 2617): com.blogspot.newapphorizons.fakegps last pss: 305648
+01-15 15:27:53.164 D/StNfcHal( 1992): (#0CB51) Rx 6f 02 0f (hidden)
+01-15 15:27:53.165 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:53.173 D/StNfcHal( 1992): (#0CB52) Rx 6f 02 28 (hidden)
+01-15 15:27:53.174 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:53.183 D/StNfcHal( 1992): (#0CB53) Rx 6f 02 19 (hidden)
+01-15 15:27:53.184 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:53.218 D/StNfcHal( 1992): (#0CB54) Rx 6f 02 11 (hidden)
+01-15 15:27:53.219 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:53.231 D/StNfcHal( 1992): (#0CB55) Rx 6f 02 0f (hidden)
+01-15 15:27:53.231 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:53.241 D/StNfcHal( 1992): (#0CB56) Rx 6f 02 09 (hidden)
+01-15 15:27:53.241 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:52.193 I/[kworke][0xc4d36981f85][20:27:53.317772] qca6750(24865): [24865:I:PMO] pmo_core_psoc_send_host_wakeup_ind_to_fw: Host wakeup indication sent to fw
+01-15 15:27:53.565 D/MajlisRoom(25067): 🎧 audio(size=640) route: useGoogleSTT=true sonioxConnected=false useRealtime=false realtimeConnected=false useVosk=false deepgramConnected=false
+01-15 15:27:53.660 D/StNfcHal( 1992): (#0CB57) Rx 6f 02 09 (hidden)
+01-15 15:27:53.661 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:53.668 D/StNfcHal( 1992): (#0CB58) Rx 6f 02 0d (hidden)
+01-15 15:27:53.670 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:53.679 D/StNfcHal( 1992): (#0CB59) Rx 6f 02 0f (hidden)
+01-15 15:27:53.679 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:53.705 D/StNfcHal( 1992): (#0CB5A) Rx 6f 02 11 (hidden)
+01-15 15:27:53.706 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:53.719 D/StNfcHal( 1992): (#0CB5B) Rx 6f 02 0f (hidden)
+01-15 15:27:53.720 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:53.728 D/StNfcHal( 1992): (#0CB5C) Rx 6f 02 09 (hidden)
+01-15 15:27:53.729 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:53.869 W/dataInfoSend( 3936): type=1400 audit(0.0:744862941): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:53.869 W/dataInfoSend( 3936): type=1400 audit(0.0:744862942): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:53.869 W/dataInfoSend( 3936): type=1400 audit(0.0:744862943): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:53.869 W/dataInfoSend( 3936): type=1400 audit(0.0:744862944): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:53.869 W/dataInfoSend( 3936): type=1400 audit(0.0:744862945): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:52.747 W/audit   (18643): audit_lost=743612711 audit_rate_limit=5 audit_backlog_limit=64
+01-15 15:27:52.747 E/audit   (18643): rate limit exceeded
+01-15 15:27:54.031 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s
+01-15 15:27:54.032 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:54.032 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:54.033 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:54.033 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:27:54.034 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:27:54.059 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+01-15 15:27:54.059 D/vendor.qti.bluetooth@1.1-ibs_handler( 1502): SerialClockVote: vote for UART CLK ON
+01-15 15:27:54.059 D/vendor.qti.bluetooth@1.1-wake_lock( 1502): Acquire wakelock is acquired 
+01-15 15:27:54.059 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): ProcessIbsCmd: Writing IBS_WAKE_ACK
+01-15 15:27:54.100 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+01-15 15:27:54.100 D/vendor.qti.bluetooth@1.1-ibs_handler( 1502): SerialClockVote: vote for UART CLK OFF
+01-15 15:27:54.146 D/StNfcHal( 1992): (#0CB5D) Rx 6f 02 0a (hidden)
+01-15 15:27:54.146 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:54.155 D/StNfcHal( 1992): (#0CB5E) Rx 6f 02 3a (hidden)
+01-15 15:27:54.155 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:54.251 D/vendor.qti.bluetooth@1.1-wake_lock( 1502): Release wakelock is released 
+01-15 15:27:53.198 E/[    C0] [soft_i][0xc4d37be92c6][20(    0): 27:54.322829] qca6750: [0:E:QDF] htc_rx_completion_handler: Received initial wake up
+01-15 15:27:53.198 I/[kworke][0xc4d37beab82][20:27:54.323158] qca6750(24865): [24865:I:PMO] pmo_core_psoc_send_host_wakeup_ind_to_fw: Host wakeup indication sent to fw
+01-15 15:27:53.206 I/[    C0] [soft_i][0xc4d37c11ed8][20(    0): 27:54.331523] qca6750: [0:I:WMA] WLAN triggered wakeup: BPF_ALLOW (39), vdev: 0 (STA)
+01-15 15:27:53.207 I/[    C0] [soft_i][0xc4d37c13139][20(    0): 27:54.331768] qca6750: [0:I:WMA] wma_wake_event_packet: Wake event packet:
+01-15 15:27:54.606 D/MajlisRoom(25067): 🎧 audio(size=640) route: useGoogleSTT=true sonioxConnected=false useRealtime=false realtimeConnected=false useVosk=false deepgramConnected=false
+01-15 15:27:54.750 D/StNfcHal( 1992): (#0CB5F) Rx 6f 02 0f (hidden)
+01-15 15:27:54.750 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:54.760 D/StNfcHal( 1992): (#0CB60) Rx 6f 02 33 (hidden)
+01-15 15:27:54.761 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:54.799 I/SDM     ( 1620): DisplayBase::CommitThread: Received idle timeout, panel: video, timeout: 70000 us
+01-15 15:27:54.921 W/dataInfoSend( 3936): type=1400 audit(0.0:744865922): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:54.921 W/dataInfoSend( 3936): type=1400 audit(0.0:744865923): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:54.921 W/dataInfoSend( 3936): type=1400 audit(0.0:744865924): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:54.921 W/dataInfoSend( 3936): type=1400 audit(0.0:744865925): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:54.921 W/dataInfoSend( 3936): type=1400 audit(0.0:744865926): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:53.797 W/audit   (18643): audit_lost=743615687 audit_rate_limit=5 audit_backlog_limit=64
+01-15 15:27:53.797 E/audit   (18643): rate limit exceeded
+01-15 15:27:55.041 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s
+01-15 15:27:55.042 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:55.042 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:55.043 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:55.044 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:27:55.640 D/MajlisRoom(25067): 🎧 audio(size=640) route: useGoogleSTT=true sonioxConnected=false useRealtime=false realtimeConnected=false useVosk=false deepgramConnected=false
+01-15 15:27:55.973 W/dataInfoSend( 3936): type=1400 audit(0.0:744868903): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:55.973 W/dataInfoSend( 3936): type=1400 audit(0.0:744868904): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:55.973 W/dataInfoSend( 3936): type=1400 audit(0.0:744868905): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:55.973 W/dataInfoSend( 3936): type=1400 audit(0.0:744868906): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:55.973 W/dataInfoSend( 3936): type=1400 audit(0.0:744868907): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:54.849 W/audit   (18643): audit_lost=743618663 audit_rate_limit=5 audit_backlog_limit=64
+01-15 15:27:54.849 E/audit   (18643): rate limit exceeded
+01-15 15:27:56.051 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s
+01-15 15:27:56.052 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:56.052 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:56.052 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:56.053 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:27:56.053 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:27:55.143 E/[    C2] [soft_i][0xc4d39f899d0][20(    0): 27:56.268523] qca6750: [0:E:QDF] htc_rx_completion_handler: Received initial wake up
+01-15 15:27:55.144 I/[kworke][0xc4d39f8b1d4][20:27:56.268843] qca6750(23957): [23957:I:PMO] pmo_core_psoc_send_host_wakeup_ind_to_fw: Host wakeup indication sent to fw
+01-15 15:27:55.146 I/[    C2] [soft_i][0xc4d39f94d7d][20(    0): 27:56.270919] qca6750: [0:I:WMA] WLAN triggered wakeup: BPF_ALLOW (39), vdev: 0 (STA)
+01-15 15:27:55.146 I/[    C2] [soft_i][0xc4d39f95f9c][20(    0): 27:56.271160] qca6750: [0:I:WMA] wma_wake_event_packet: Wake event packet:
+01-15 15:27:56.647 D/MajlisRoom(25067): 🎧 audio(size=640) route: useGoogleSTT=true sonioxConnected=false useRealtime=false realtimeConnected=false useVosk=false deepgramConnected=false
+01-15 15:27:56.840 D/StNfcHal( 1992): (#0CB61) Rx 6f 02 0f (hidden)
+01-15 15:27:56.840 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:56.846 D/StNfcHal( 1992): (#0CB62) Rx 6f 02 28 (hidden)
+01-15 15:27:56.847 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:56.856 D/StNfcHal( 1992): (#0CB63) Rx 6f 02 19 (hidden)
+01-15 15:27:56.857 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:56.890 D/StNfcHal( 1992): (#0CB64) Rx 6f 02 11 (hidden)
+01-15 15:27:56.891 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:56.904 D/StNfcHal( 1992): (#0CB65) Rx 6f 02 0f (hidden)
+01-15 15:27:56.904 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:56.914 D/StNfcHal( 1992): (#0CB66) Rx 6f 02 09 (hidden)
+01-15 15:27:56.914 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:56.997 W/dataInfoSend( 3936): type=1400 audit(0.0:744871884): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:56.997 W/dataInfoSend( 3936): type=1400 audit(0.0:744871885): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:56.997 W/dataInfoSend( 3936): type=1400 audit(0.0:744871886): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:56.997 W/dataInfoSend( 3936): type=1400 audit(0.0:744871887): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:56.997 W/dataInfoSend( 3936): type=1400 audit(0.0:744871888): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:55.875 W/audit   (18643): audit_lost=743621639 audit_rate_limit=5 audit_backlog_limit=64
+01-15 15:27:55.875 E/audit   (18643): rate limit exceeded
+01-15 15:27:57.057 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s
+01-15 15:27:57.058 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:57.059 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:57.059 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:57.059 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:27:57.059 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:27:57.335 D/StNfcHal( 1992): (#0CB67) Rx 6f 02 09 (hidden)
+01-15 15:27:57.335 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:57.341 D/StNfcHal( 1992): (#0CB68) Rx 6f 02 0d (hidden)
+01-15 15:27:57.341 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:57.351 D/StNfcHal( 1992): (#0CB69) Rx 6f 02 0f (hidden)
+01-15 15:27:57.352 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:57.378 D/StNfcHal( 1992): (#0CB6A) Rx 6f 02 11 (hidden)
+01-15 15:27:57.379 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:57.393 D/StNfcHal( 1992): (#0CB6B) Rx 6f 02 0f (hidden)
+01-15 15:27:57.394 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:57.401 D/StNfcHal( 1992): (#0CB6C) Rx 6f 02 09 (hidden)
+01-15 15:27:57.402 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:57.687 D/MajlisRoom(25067): 🎧 audio(size=640) route: useGoogleSTT=true sonioxConnected=false useRealtime=false realtimeConnected=false useVosk=false deepgramConnected=false
+01-15 15:27:57.819 D/StNfcHal( 1992): (#0CB6D) Rx 6f 02 0a (hidden)
+01-15 15:27:57.820 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:57.828 D/StNfcHal( 1992): (#0CB6E) Rx 6f 02 3a (hidden)
+01-15 15:27:57.828 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:56.882 E/[    C3] [soft_i][0xc4d3bf5db7d][20(    0): 27:58.006785] qca6750: [0:E:QDF] htc_rx_completion_handler: Received initial wake up
+01-15 15:27:56.882 I/[kworke][0xc4d3bf5f238][20:27:58.007088] qca6750(18958): [18958:I:PMO] pmo_core_psoc_send_host_wakeup_ind_to_fw: Host wakeup indication sent to fw
+01-15 15:27:56.887 I/[    C3] [soft_i][0xc4d3bf76512][20(    0): 27:58.012033] qca6750: [0:I:WMA] WLAN triggered wakeup: BPF_ALLOW (39), vdev: 0 (STA)
+01-15 15:27:56.887 I/[    C3] [soft_i][0xc4d3bf784a7][20(    0): 27:58.012454] qca6750: [0:I:WMA] wma_wake_event_packet: Wake event packet:
+01-15 15:27:58.041 W/dataInfoSend( 3936): type=1400 audit(0.0:744874865): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:58.041 W/dataInfoSend( 3936): type=1400 audit(0.0:744874866): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:58.041 W/dataInfoSend( 3936): type=1400 audit(0.0:744874867): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:56.924 W/audit   (18643): audit_lost=743624615 audit_rate_limit=5 audit_backlog_limit=64
+01-15 15:27:56.924 E/audit   (18643): rate limit exceeded
+01-15 15:27:58.041 W/dataInfoSend( 3936): type=1400 audit(0.0:744874868): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:58.041 W/dataInfoSend( 3936): type=1400 audit(0.0:744874869): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:58.065 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s
+01-15 15:27:58.066 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:58.066 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:58.067 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:58.067 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:27:58.067 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:27:58.439 I/NearbyMediums(13659): Found Fast Ble Advertisements :
+01-15 15:27:58.439 I/NearbyMediums(13659): BleAdvertisement { version=2, socketVersion=2, isFast=true, serviceIdHash=null, data=[ 0x23 0x47 0x56 0x38 0x36 0x11 0x32 0xf6 0x40 0x08 0x2c 0x5d 0x94 0x23 0xe8 0xda 0x2a 0xc0 0x46 0x77 0x7e 0x3b 0x4a ], deviceToken=[ 0x3a 0xb6 ], rxAdvertisement=null } : 2 times.
+01-15 15:27:58.439 I/NearbyMediums(13659): Total 2 fast advertisements from 1 unique advertisers.
+01-15 15:27:58.439 I/NearbyMediums(13659): Current Tracked Scanning Clients are : {NearbyConnections.EnvironmentMonitor, NearbySharing, NearbyConnections.TxAdvertisement}
+01-15 15:27:57.331 E/[    C1] [soft_i][0xc4d3c79633a][20(    0): 27:58.455742] qca6750: [0:E:DP] dp_tx_update_peer_stats: Release source:3 is not from TQM
+01-15 15:27:57.531 E/healthd ( 1518): soc_b:100, soc:100, soc_c:100, Vol:4446, Cur:-2,chg_s:1,t_l:2434,b_s:5,OffTlast:0,lcd_off:0,Vu:4963,Vw:0,pid:1518,brightness:5.565796,rmCap:4864
+01-15 15:27:57.532 E/healthd ( 1518): battery l=100 v=4446 t=27.0 h=2 st=5 c=-2746 fc=4864000 cc=97 chg=u
+01-15 15:27:57.543 E/healthd ( 1518): soc_b:100, soc:100, soc_c:100, Vol:4446, Cur:-2,chg_s:1,t_l:2434,b_s:5,OffTlast:0,lcd_off:0,Vu:4983,Vw:0,pid:1518,brightness:5.565796,rmCap:4864
+01-15 15:27:57.544 W/HealthLoop( 1518): debug.tracing.screen_brightness:5.565796
+01-15 15:27:58.722 D/MajlisRoom(25067): 🎧 audio(size=640) route: useGoogleSTT=true sonioxConnected=false useRealtime=false realtimeConnected=false useVosk=false deepgramConnected=false
+01-15 15:27:58.722 D/StNfcHal( 1992): (#0CB6F) Rx 6f 02 0f (hidden)
+01-15 15:27:58.722 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:58.729 D/StNfcHal( 1992): (#0CB70) Rx 6f 02 28 (hidden)
+01-15 15:27:58.730 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:58.739 D/StNfcHal( 1992): (#0CB71) Rx 6f 02 19 (hidden)
+01-15 15:27:58.739 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:58.773 D/StNfcHal( 1992): (#0CB72) Rx 6f 02 11 (hidden)
+01-15 15:27:58.774 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:58.786 D/StNfcHal( 1992): (#0CB73) Rx 6f 02 0f (hidden)
+01-15 15:27:58.787 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:58.796 D/StNfcHal( 1992): (#0CB74) Rx 6f 02 09 (hidden)
+01-15 15:27:58.797 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:58.830 I/SDM     ( 1620): DisplayBase::CommitThread: Received idle timeout, panel: video, timeout: 70000 us
+01-15 15:27:59.074 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s
+01-15 15:27:59.075 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:59.075 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:59.076 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:27:59.076 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:27:59.077 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:27:59.097 W/dataInfoSend( 3936): type=1400 audit(0.0:744877846): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:59.097 W/dataInfoSend( 3936): type=1400 audit(0.0:744877847): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:59.097 W/dataInfoSend( 3936): type=1400 audit(0.0:744877848): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:59.097 W/dataInfoSend( 3936): type=1400 audit(0.0:744877849): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:59.097 W/dataInfoSend( 3936): type=1400 audit(0.0:744877850): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:57.977 W/audit   (18643): audit_lost=743627591 audit_rate_limit=5 audit_backlog_limit=64
+01-15 15:27:57.977 E/audit   (18643): rate limit exceeded
+01-15 15:27:59.215 D/StNfcHal( 1992): (#0CB75) Rx 6f 02 09 (hidden)
+01-15 15:27:59.216 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:59.224 D/StNfcHal( 1992): (#0CB76) Rx 6f 02 0d (hidden)
+01-15 15:27:59.224 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:59.234 D/StNfcHal( 1992): (#0CB77) Rx 6f 02 0f (hidden)
+01-15 15:27:59.234 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:59.260 D/StNfcHal( 1992): (#0CB78) Rx 6f 02 11 (hidden)
+01-15 15:27:59.261 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:59.274 D/StNfcHal( 1992): (#0CB79) Rx 6f 02 0f (hidden)
+01-15 15:27:59.274 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:59.284 D/StNfcHal( 1992): (#0CB7A) Rx 6f 02 09 (hidden)
+01-15 15:27:59.284 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:59.673 I/NtCharge( 2617): mLastBatteryCycleCount:97
+01-15 15:27:59.681 D/NtCharge( 2617):  currentTimeInDay: 20468 LastTimeInDay: -2 diff: 20470
+01-15 15:27:59.702 D/StNfcHal( 1992): (#0CB7B) Rx 6f 02 0a (hidden)
+01-15 15:27:59.702 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:59.711 D/StNfcHal( 1992): (#0CB7C) Rx 6f 02 3a (hidden)
+01-15 15:27:59.711 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:27:59.766 D/MajlisRoom(25067): 🎧 audio(size=640) route: useGoogleSTT=true sonioxConnected=false useRealtime=false realtimeConnected=false useVosk=false deepgramConnected=false
+01-15 15:28:00.010 D/StNfcHal( 1992): (#0CB7D) Rx 6f 02 0f (hidden)
+01-15 15:28:00.010 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:28:00.018 D/StNfcHal( 1992): (#0CB7E) Rx 6f 02 33 (hidden)
+01-15 15:28:00.018 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:28:00.035 D/LightBarController( 3231): updateStatus= numStacks: 1, size: 0, appearance: 0
+01-15 15:28:00.083 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s
+01-15 15:28:00.084 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:28:00.084 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:28:00.085 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:28:00.088 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:28:00.124 I/SDM     ( 1620): DisplayBase::CommitThread: Received idle timeout, panel: video, timeout: 69999 us
+01-15 15:28:00.149 W/dataInfoSend( 3936): type=1400 audit(0.0:744880827): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:28:00.149 W/dataInfoSend( 3936): type=1400 audit(0.0:744880828): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:28:00.149 W/dataInfoSend( 3936): type=1400 audit(0.0:744880829): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:28:00.149 W/dataInfoSend( 3936): type=1400 audit(0.0:744880830): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:28:00.149 W/dataInfoSend( 3936): type=1400 audit(0.0:744880831): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:27:59.025 W/audit   (18643): audit_lost=743630567 audit_rate_limit=5 audit_backlog_limit=64
+01-15 15:27:59.025 E/audit   (18643): rate limit exceeded
+01-15 15:28:00.258 D/BackgroundInstallControlService( 2617): Package event received: 0
+01-15 15:28:00.263 W/ProcessStats( 2617): Tracking association SourceState{d71905f com.google.android.gms.persistent/10147 Fgs #401209} whose proc state 3 is better than process ProcessState{1c662f8 com.google.android.gms/10147 pkg=com.google.android.gms} proc state 14 (6 skipped)
+01-15 15:28:00.267 D/BackgroundInstallControlService( 2617): Package event received: 0
+01-15 15:28:00.710 I/CNSS    ( 2024): /sys/wifi/dump_in_progress doesn't exist
+01-15 15:28:00.710 I/CNSS    ( 2024): /sys/wifi/max_chipset_log_size doesn't exist
+01-15 15:27:59.584 I/[kworke][0xc4d3f0d8290][20:28:00.708959] qca6750(18958): [18958:I:PMO] pmo_core_psoc_send_host_wakeup_ind_to_fw: Host wakeup indication sent to fw
+01-15 15:28:00.802 D/MajlisRoom(25067): 🎧 audio(size=640) route: useGoogleSTT=true sonioxConnected=false useRealtime=false realtimeConnected=false useVosk=false deepgramConnected=false
+01-15 15:28:01.092 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s
+01-15 15:28:01.092 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:28:01.093 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:28:01.093 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:28:01.093 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:28:01.095 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:28:00.051 W/audit   (18643): audit_lost=743633543 audit_rate_limit=5 audit_backlog_limit=64
+01-15 15:28:00.051 E/audit   (18643): rate limit exceeded
+01-15 15:28:01.173 W/dataInfoSend( 3936): type=1400 audit(0.0:744883808): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:28:01.173 W/dataInfoSend( 3936): type=1400 audit(0.0:744883809): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:28:01.173 W/dataInfoSend( 3936): type=1400 audit(0.0:744883810): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:28:01.173 W/dataInfoSend( 3936): type=1400 audit(0.0:744883811): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:28:01.173 W/dataInfoSend( 3936): type=1400 audit(0.0:744883812): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:28:01.185 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+01-15 15:28:01.185 D/vendor.qti.bluetooth@1.1-ibs_handler( 1502): SerialClockVote: vote for UART CLK ON
+01-15 15:28:01.186 D/vendor.qti.bluetooth@1.1-wake_lock( 1502): Acquire wakelock is acquired 
+01-15 15:28:01.186 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): ProcessIbsCmd: Writing IBS_WAKE_ACK
+01-15 15:28:01.227 I/vendor.qti.bluetooth@1.1-ibs_handler( 1502): ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+01-15 15:28:01.228 D/vendor.qti.bluetooth@1.1-ibs_handler( 1502): SerialClockVote: vote for UART CLK OFF
+01-15 15:28:01.380 D/vendor.qti.bluetooth@1.1-wake_lock( 1502): Release wakelock is released 
+01-15 15:28:01.804 D/MajlisRoom(25067): 🎧 audio(size=640) route: useGoogleSTT=true sonioxConnected=false useRealtime=false realtimeConnected=false useVosk=false deepgramConnected=false
+01-15 15:28:02.101 D/StNfcHal( 1992): (#0CB7F) Rx 6f 02 0f (hidden)
+01-15 15:28:02.101 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:28:02.103 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s
+01-15 15:28:02.104 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:28:02.105 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:28:02.105 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:28:02.106 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:28:02.107 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:28:02.109 D/StNfcHal( 1992): (#0CB80) Rx 6f 02 33 (hidden)
+01-15 15:28:02.109 D/StNfcHal( 1992): HalStopTimer 
+01-15 15:28:02.211 D/NtMemoryManager( 2617): com.android.settings last pss: 389768
+01-15 15:28:02.213 D/NtMemoryManager( 2617): com.expressvpn.vpn last pss: 481516
+01-15 15:28:02.214 D/NtMemoryManager( 2617): com.facebook.stella last pss: 917972
+01-15 15:28:02.214 D/NtMemoryManager( 2617): com.android.vending last pss: 555124
+01-15 15:28:02.214 D/NtMemoryManager( 2617): com.google.android.googlequicksearchbox last pss: 185472
+01-15 15:28:02.214 D/NtMemoryManager( 2617): com.blogspot.newapphorizons.fakegps last pss: 305648
+01-15 15:28:02.214 D/NtMemoryManager( 2617): com.android.settings last pss: 389768
+01-15 15:28:02.214 D/NtMemoryManager( 2617): com.expressvpn.vpn last pss: 481516
+01-15 15:28:02.214 D/NtMemoryManager( 2617): com.facebook.stella last pss: 917972
+01-15 15:28:02.214 D/NtMemoryManager( 2617): com.android.vending last pss: 555124
+01-15 15:28:02.214 D/NtMemoryManager( 2617): com.google.android.googlequicksearchbox last pss: 185472
+01-15 15:28:02.214 D/NtMemoryManager( 2617): com.blogspot.newapphorizons.fakegps last pss: 305648
+01-15 15:28:02.215 D/NtMemoryManager( 2617): com.android.settings last pss: 389768
+01-15 15:28:02.215 D/NtMemoryManager( 2617): com.expressvpn.vpn last pss: 481516
+01-15 15:28:02.215 D/NtMemoryManager( 2617): com.facebook.stella last pss: 917972
+01-15 15:28:02.215 D/NtMemoryManager( 2617): com.android.vending last pss: 555124
+01-15 15:28:02.215 D/NtMemoryManager( 2617): com.google.android.googlequicksearchbox last pss: 185472
+01-15 15:28:02.215 D/NtMemoryManager( 2617): com.blogspot.newapphorizons.fakegps last pss: 305648
+01-15 15:28:02.215 D/NtMemoryManager( 2617): com.android.settings last pss: 389768
+01-15 15:28:02.215 D/NtMemoryManager( 2617): com.expressvpn.vpn last pss: 481516
+01-15 15:28:02.215 D/NtMemoryManager( 2617): com.facebook.stella last pss: 917972
+01-15 15:28:02.215 D/NtMemoryManager( 2617): com.android.vending last pss: 555124
+01-15 15:28:02.215 D/NtMemoryManager( 2617): com.google.android.googlequicksearchbox last pss: 185472
+01-15 15:28:02.215 D/NtMemoryManager( 2617): com.blogspot.newapphorizons.fakegps last pss: 305648
+01-15 15:28:02.221 W/dataInfoSend( 3936): type=1400 audit(0.0:744886789): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:28:02.221 W/dataInfoSend( 3936): type=1400 audit(0.0:744886790): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:28:02.221 W/dataInfoSend( 3936): type=1400 audit(0.0:744886791): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:28:02.221 W/dataInfoSend( 3936): type=1400 audit(0.0:744886792): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:28:02.221 W/dataInfoSend( 3936): type=1400 audit(0.0:744886793): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:28:01.100 W/audit   (18643): audit_lost=743636519 audit_rate_limit=5 audit_backlog_limit=64
+01-15 15:28:01.100 E/audit   (18643): rate limit exceeded
+01-15 15:28:02.591 I/BatteryEventDispatcherImpl(29998): [_waitingForDispatchEvent] processing BatteryEventDispatcherImpl$DispatchEvent$OnPollTimeout
+01-15 15:28:02.776 D/NtMemoryManager( 2617): com.android.settings last pss: 389768
+01-15 15:28:02.776 D/NtMemoryManager( 2617): com.expressvpn.vpn last pss: 481516
+01-15 15:28:02.776 D/NtMemoryManager( 2617): com.facebook.stella last pss: 917972
+01-15 15:28:02.776 D/NtMemoryManager( 2617): com.android.vending last pss: 555124
+01-15 15:28:02.777 D/NtMemoryManager( 2617): com.google.android.googlequicksearchbox last pss: 185472
+01-15 15:28:02.777 D/NtMemoryManager( 2617): com.blogspot.newapphorizons.fakegps last pss: 305648
+01-15 15:28:02.777 D/NtMemoryManager( 2617): com.android.settings last pss: 389768
+01-15 15:28:02.777 D/NtMemoryManager( 2617): com.expressvpn.vpn last pss: 481516
+01-15 15:28:02.777 D/NtMemoryManager( 2617): com.facebook.stella last pss: 917972
+01-15 15:28:02.777 D/NtMemoryManager( 2617): com.android.vending last pss: 555124
+01-15 15:28:02.777 D/NtMemoryManager( 2617): com.google.android.googlequicksearchbox last pss: 185472
+01-15 15:28:02.778 D/NtMemoryManager( 2617): com.blogspot.newapphorizons.fakegps last pss: 305648
+01-15 15:28:02.840 D/MajlisRoom(25067): 🎧 audio(size=640) route: useGoogleSTT=true sonioxConnected=false useRealtime=false realtimeConnected=false useVosk=false deepgramConnected=false
+01-15 15:28:02.847 I/SDM     ( 1620): DisplayBase::CommitThread: Received idle timeout, panel: video, timeout: 70000 us
+01-15 15:28:03.110 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s
+01-15 15:28:03.111 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:28:03.112 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:28:03.112 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:28:03.112 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:28:03.113 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:28:03.144 I/SDM     ( 1620): DisplayBase::CommitThread: Received idle timeout, panel: video, timeout: 69999 us
+01-15 15:28:03.277 W/dataInfoSend( 3936): type=1400 audit(0.0:744889770): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:28:03.277 W/dataInfoSend( 3936): type=1400 audit(0.0:744889771): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:28:03.277 W/dataInfoSend( 3936): type=1400 audit(0.0:744889772): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:28:03.277 W/dataInfoSend( 3936): type=1400 audit(0.0:744889773): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:28:03.277 W/dataInfoSend( 3936): type=1400 audit(0.0:744889774): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:28:02.154 W/audit   (18643): audit_lost=743639495 audit_rate_limit=5 audit_backlog_limit=64
+01-15 15:28:02.154 E/audit   (18643): rate limit exceeded
+01-15 15:28:03.565 W/TimedProcessReaper(15923): Current importance is: 300
+01-15 15:28:03.885 D/MajlisRoom(25067): 🎧 audio(size=640) route: useGoogleSTT=true sonioxConnected=false useRealtime=false realtimeConnected=false useVosk=false deepgramConnected=false
+01-15 15:28:03.928 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): bindService is called for service : com.google.android.gms/.chimera.PersistentDirectBootAwareApiService and for client com.google.android.googlequicksearchbox:interactor
+01-15 15:28:03.928 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): total connections for service : com.google.android.gms/.chimera.PersistentDirectBootAwareApiServiceare :23
+01-15 15:28:03.928 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): total connections for client : com.google.android.googlequicksearchbox:interactorare :2
+01-15 15:28:03.930 D/NtMemoryManager( 2617): com.android.settings last pss: 389768
+01-15 15:28:03.931 D/NtMemoryManager( 2617): com.expressvpn.vpn last pss: 481516
+01-15 15:28:03.931 D/NtMemoryManager( 2617): com.facebook.stella last pss: 917972
+01-15 15:28:03.931 D/NtMemoryManager( 2617): com.android.vending last pss: 555124
+01-15 15:28:03.931 D/NtMemoryManager( 2617): com.google.android.googlequicksearchbox last pss: 185472
+01-15 15:28:03.932 D/NtMemoryManager( 2617): com.blogspot.newapphorizons.fakegps last pss: 305648
+01-15 15:28:04.075 I/AppSearchIcing( 2617): icing-search-engine.cc:2175: Persisting data to disk
+01-15 15:28:04.080 I/AppSearchIcing( 2617): icing-search-engine.cc:2191: PersistToDisk completed.
+01-15 15:28:04.117 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s
+01-15 15:28:04.118 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:28:04.119 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:28:04.119 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too close
+01-15 15:28:04.120 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:28:04.120 I/FusedLocation(13659): (REDACTED) location delivery to %s blocked - too fast
+01-15 15:28:04.325 W/dataInfoSend( 3936): type=1400 audit(0.0:744892751): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:28:04.325 W/dataInfoSend( 3936): type=1400 audit(0.0:744892752): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:28:04.325 W/dataInfoSend( 3936): type=1400 audit(0.0:744892753): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:28:04.325 W/dataInfoSend( 3936): type=1400 audit(0.0:744892754): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:28:04.325 W/dataInfoSend( 3936): type=1400 audit(0.0:744892755): avc:  denied  { bpf } for  capability=39  scontext=u:r:bpfloader:s0 tcontext=u:r:bpfloader:s0 tclass=capability2 permissive=0
+01-15 15:28:03.204 W/audit   (18643): audit_lost=743642471 audit_rate_limit=5 audit_backlog_limit=64
+01-15 15:28:03.205 E/audit   (18643): rate limit exceeded
+01-15 15:28:04.418 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): unbindService is called for service : com.google.android.gms/.chimera.GmsInternalBoundBrokerService and for client com.google.android.gms
+01-15 15:28:04.418 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): size of service connections for service: com.google.android.gms/.chimera.GmsInternalBoundBrokerServiceafter removal is 0
+01-15 15:28:04.418 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): size of client connections for client: com.google.android.gmsafter removal is 2
+01-15 15:28:04.418 I/vendor.qti.hardware.servicetrackeraidl-service( 1643): destroyService is called for service : com.google.android.gms/.chimera.GmsInternalBoundBrokerService
+01-15 15:28:04.420 D/BoundBrokerSvc(26684): onUnbind: Intent { act=com.google.android.gms.common.BIND_SHARED_PREFS xflg=0x4 pkg=com.google.android.gms }
+01-15 15:28:04.926 D/MajlisRoom(25067): 🎧 audio(size=640) route: useGoogleSTT=true sonioxConnected=false useRealtime=false realtimeConnected=false useVosk=false deepgramConnected=false
+01-15 15:28:05.130 I/FusedLocation(13659): (REDACTED) mock location %s injected by %s

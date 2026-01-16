@@ -16,9 +16,13 @@ import android.media.AudioTrack
 import android.util.Log
 import com.meta.wearable.dat.externalsampleapps.landmarkguide.BuildConfig
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -66,8 +70,19 @@ class OpenAITranslationService(private val context: Context) {
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private var currentAudioTrack: AudioTrack? = null
     
-    // Mutex for sequential TTS playback (no interruption)
-    private val playbackMutex = Mutex()
+    // Audio queue for seamless playback (no interruption)
+    private data class AudioQueueItem(
+        val audioData: ByteArray,
+        val sampleRate: Int,
+        val useBluetooth: Boolean,
+        val onComplete: (() -> Unit)? = null  // Callback when playback completes
+    )
+    
+    private val audioQueue = mutableListOf<AudioQueueItem>()
+    private val queueMutex = Mutex()
+    private var isPlaying = false
+    private val playbackScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var playbackJob: Job? = null
     
     /**
      * Translate text using GPT-4o-mini (fastest model)
@@ -109,9 +124,9 @@ class OpenAITranslationService(private val context: Context) {
             }
             
             val jsonBody = JSONObject().apply {
-                put("model", "gpt-4o-mini")
+                put("model", "gpt-3.5-turbo")  // Faster than gpt-4o-mini!
                 put("messages", messages)
-                put("max_tokens", 150)   // Reduced for faster response
+                put("max_tokens", 100)   // Reduced for faster response
                 put("temperature", 0.1)  // Lower = faster, more deterministic
             }
             
@@ -161,6 +176,40 @@ class OpenAITranslationService(private val context: Context) {
     }
     
     /**
+     * Translate AND Speak in optimized sequence
+     * Translation result returned immediately, TTS starts concurrently
+     */
+    suspend fun translateAndSpeak(
+        text: String,
+        targetLanguage: String,
+        sourceLanguage: String,
+        useBluetooth: Boolean = true,
+        voice: String? = null,
+        onTranslated: ((TranslationResult) -> Unit)? = null
+    ): TranslationResult? = withContext(Dispatchers.IO) {
+        val startTime = System.currentTimeMillis()
+        
+        // Translate first
+        val result = translate(text, targetLanguage, sourceLanguage)
+        
+        if (result != null) {
+            val translateTime = System.currentTimeMillis() - startTime
+            Log.d(TAG, "⚡ Translation done in ${translateTime}ms, starting TTS...")
+            
+            // Notify caller immediately
+            onTranslated?.invoke(result)
+            
+            // Start TTS concurrently
+            speak(result.translatedText, targetLanguage, useBluetooth, voice)
+            
+            val totalTime = System.currentTimeMillis() - startTime
+            Log.d(TAG, "✅ Total pipeline: ${totalTime}ms")
+        }
+        
+        result
+    }
+    
+    /**
      * Speak text using OpenAI TTS
      * Uses full buffer download for stable playback (no crackling)
      */
@@ -168,7 +217,8 @@ class OpenAITranslationService(private val context: Context) {
         text: String,
         languageCode: String,
         useBluetooth: Boolean = true,
-        voice: String? = null  // Optional: override voice (e.g., from VoiceAnalyzer)
+        voice: String? = null,  // Optional: override voice (e.g., from VoiceAnalyzer)
+        onComplete: (() -> Unit)? = null  // Callback when playback completes
     ): Boolean = withContext(Dispatchers.IO) {
         try {
             if (apiKey.isBlank()) {
@@ -183,7 +233,7 @@ class OpenAITranslationService(private val context: Context) {
                 put("input", text)
                 put("voice", selectedVoice)
                 put("response_format", "pcm")  // Raw PCM
-                put("speed", 1.15)  // 15% faster for natural conversation
+                put("speed", 1.25)  // 25% faster for snappy response
             }
             
             val requestBody = jsonBody.toString()
@@ -212,9 +262,11 @@ class OpenAITranslationService(private val context: Context) {
             
             // Full buffer download for stable playback
             val audioData = response.body?.bytes() ?: return@withContext false
-            playAudio(audioData, 24000, useBluetooth)
             
-            Log.d(TAG, "✅ TTS played: ${audioData.size} bytes")
+            // Add to queue instead of playing directly
+            queueAudio(audioData, 24000, useBluetooth, onComplete)
+            
+            Log.d(TAG, "✅ TTS queued: ${audioData.size} bytes")
             true
         } catch (e: Exception) {
             Log.e(TAG, "❌ TTS error: ${e.message}", e)
@@ -249,8 +301,7 @@ class OpenAITranslationService(private val context: Context) {
     ) = withContext(Dispatchers.IO) {
         if (inputStream == null) return@withContext
         
-        // Use mutex to queue playback
-        playbackMutex.withLock {
+        // Legacy streaming function - not used with queue system
             try {
                 if (useBluetooth) {
                     audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
@@ -317,22 +368,77 @@ class OpenAITranslationService(private val context: Context) {
                 Log.e(TAG, "❌ Audio streaming error: ${e.message}", e)
             } finally {
                 inputStream.close()
-            }
         }
     }
     
-    private suspend fun playAudio(
+    /**
+     * Queue audio for seamless playback (no interruption)
+     */
+    private suspend fun queueAudio(
         pcmData: ByteArray,
         sampleRate: Int,
-        useBluetooth: Boolean
+        useBluetooth: Boolean,
+        onComplete: (() -> Unit)? = null
     ) = withContext(Dispatchers.IO) {
-        // Use mutex to queue playback (wait for previous to finish)
-        playbackMutex.withLock {
-            try {
-                if (useBluetooth) {
+        queueMutex.withLock {
+            audioQueue.add(AudioQueueItem(pcmData, sampleRate, useBluetooth, onComplete))
+            Log.d(TAG, "📥 Audio queued (queue size: ${audioQueue.size})")
+        }
+        
+        // Start playback loop if not already running
+        if (!isPlaying) {
+            startPlaybackLoop()
+        }
+    }
+    
+    /**
+     * Start the playback loop that processes the queue sequentially
+     */
+    private fun startPlaybackLoop() {
+        if (isPlaying) return
+        
+        playbackJob = playbackScope.launch {
+            isPlaying = true
+            Log.d(TAG, "▶️ Playback loop started")
+            
+            // Initialize Bluetooth SCO once at the start
+            var bluetoothInitialized = false
+            
+            while (true) {
+                val item = queueMutex.withLock {
+                    if (audioQueue.isEmpty()) {
+                        null
+                    } else {
+                        audioQueue.removeAt(0)
+                    }
+                }
+                
+                if (item == null) {
+                    // Queue is empty, wait a bit and check again
+                    kotlinx.coroutines.delay(100)
+                    val shouldStop = queueMutex.withLock {
+                        if (audioQueue.isEmpty()) {
+                            // Queue is still empty, stop the loop
+                            isPlaying = false
+                            Log.d(TAG, "⏹️ Playback loop stopped (queue empty)")
+                            true
+                        } else {
+                            false
+                        }
+                    }
+                    if (shouldStop) break
+                    continue
+                }
+                
+                // Play the audio item
+                try {
+                    // Initialize Bluetooth SCO on first item if needed
+                    if (item.useBluetooth && !bluetoothInitialized) {
                     audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
                     audioManager.startBluetoothSco()
                     audioManager.isBluetoothScoOn = true
+                        bluetoothInitialized = true
+                        Log.d(TAG, "🔵 Bluetooth SCO initialized")
                 }
                 
                 val audioTrack = AudioTrack.Builder()
@@ -345,41 +451,73 @@ class OpenAITranslationService(private val context: Context) {
                     .setAudioFormat(
                         AudioFormat.Builder()
                             .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                            .setSampleRate(sampleRate)
+                                .setSampleRate(item.sampleRate)
                             .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
                             .build()
                     )
-                    .setBufferSizeInBytes(pcmData.size)
+                        .setBufferSizeInBytes(item.audioData.size)
                     .setTransferMode(AudioTrack.MODE_STATIC)
                     .build()
                 
                 currentAudioTrack = audioTrack
                 
-                audioTrack.write(pcmData, 0, pcmData.size)
+                    audioTrack.write(item.audioData, 0, item.audioData.size)
                 audioTrack.play()
                 
                 // Wait for playback to complete
-                val durationMs = (pcmData.size / 2) * 1000L / sampleRate
-                Thread.sleep(durationMs + 100)
+                    val durationMs = (item.audioData.size / 2) * 1000L / item.sampleRate
+                    Thread.sleep(durationMs + 50) // Small buffer for seamless transition
                 
                 audioTrack.stop()
                 audioTrack.release()
                 currentAudioTrack = null
                 
-                Log.d(TAG, "✅ Playback done (${durationMs}ms)")
+                    Log.d(TAG, "✅ Playback done (${durationMs}ms, queue remaining: ${queueMutex.withLock { audioQueue.size }})")
+                    
+                    // Call completion callback if provided
+                    item.onComplete?.invoke()
                 
-                // Don't stop SCO to keep mic active
             } catch (e: Exception) {
                 Log.e(TAG, "❌ Audio playback error: ${e.message}", e)
+                    // Call callback even on error
+                    item.onComplete?.invoke()
+                }
             }
+            
+            // Clean up Bluetooth SCO when queue is empty (but keep mic active)
+            // Note: We don't stop SCO here to keep microphone active
         }
+    }
+    
+    private suspend fun playAudio(
+        pcmData: ByteArray,
+        sampleRate: Int,
+        useBluetooth: Boolean
+    ) = withContext(Dispatchers.IO) {
+        // Legacy function - now uses queue
+        queueAudio(pcmData, sampleRate, useBluetooth)
     }
     
     fun stop() {
         try {
+            // Stop current playback
             currentAudioTrack?.stop()
             currentAudioTrack?.release()
             currentAudioTrack = null
+            
+            // Clear queue
+            kotlinx.coroutines.runBlocking {
+                queueMutex.withLock {
+                    audioQueue.clear()
+                    isPlaying = false
+                }
+            }
+            
+            // Cancel playback job
+            playbackJob?.cancel()
+            playbackJob = null
+            
+            Log.d(TAG, "⏹️ TTS stopped and queue cleared")
         } catch (e: Exception) {
             Log.e(TAG, "Error stopping audio: ${e.message}")
         }

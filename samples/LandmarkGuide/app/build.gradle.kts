@@ -96,6 +96,14 @@ android {
       props.getProperty("OPENAI_API_KEY", "")
     } else ""
     buildConfigField("String", "OPENAI_API_KEY", "\"$openaiApiKey\"")
+
+    // Soniox API Key (for Streaming STT)
+    val sonioxApiKey: String = if (localPropertiesFile.exists()) {
+      val props = Properties()
+      props.load(localPropertiesFile.inputStream())
+      props.getProperty("SONIOX_API_KEY", "")
+    } else ""
+    buildConfigField("String", "SONIOX_API_KEY", "\"$sonioxApiKey\"")
   }
 
   buildTypes {

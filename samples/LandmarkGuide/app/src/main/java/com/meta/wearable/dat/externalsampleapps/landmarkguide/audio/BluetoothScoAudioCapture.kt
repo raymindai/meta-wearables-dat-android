@@ -15,6 +15,7 @@ import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.media.audiofx.NoiseSuppressor
 import android.util.Log
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CoroutineScope
@@ -34,13 +35,15 @@ class BluetoothScoAudioCapture(private val context: Context) {
     
     companion object {
         private const val TAG = "BluetoothScoAudio"
-        private const val SAMPLE_RATE = 16000
+        // Bluetooth SCO is commonly 8kHz (narrowband). Using 8k reduces payload ~50% and matches routing better.
+        private const val SAMPLE_RATE = 8000
         private const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
         private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
     }
     
     private var audioManager: AudioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private var audioRecord: AudioRecord? = null
+    private var noiseSuppressor: NoiseSuppressor? = null  // Noise cancellation
     private var recordingJob: Job? = null
     private var isScoConnected = false
     
@@ -119,12 +122,15 @@ class BluetoothScoAudioCapture(private val context: Context) {
         }
         
         try {
-            // Use VOICE_RECOGNITION for better quality handsfree, or VOICE_COMMUNICATION for SCO
-            val audioSource = if (useHandsfree) {
-                MediaRecorder.AudioSource.VOICE_RECOGNITION
-            } else {
-                MediaRecorder.AudioSource.VOICE_COMMUNICATION
-            }
+            // FORCE Bluetooth SCO input - MUST use VOICE_COMMUNICATION for Bluetooth headset
+            val audioSource = MediaRecorder.AudioSource.VOICE_COMMUNICATION
+            
+            // Force Bluetooth routing
+            audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+            audioManager.isBluetoothScoOn = true
+            audioManager.startBluetoothSco()
+            
+            Log.d(TAG, "Forcing Bluetooth SCO input...")
             
             audioRecord = AudioRecord(
                 audioSource,
@@ -140,15 +146,22 @@ class BluetoothScoAudioCapture(private val context: Context) {
                 return false
             }
             
-            // Set audio mode for handsfree or SCO
-            audioManager.mode = if (useHandsfree) {
-                AudioManager.MODE_IN_COMMUNICATION  // Still needed for Bluetooth routing
+            // Enable Noise Suppression if available
+            val audioSessionId = audioRecord?.audioSessionId ?: 0
+            if (NoiseSuppressor.isAvailable() && audioSessionId != 0) {
+                try {
+                    noiseSuppressor = NoiseSuppressor.create(audioSessionId)
+                    noiseSuppressor?.enabled = true
+                    Log.d(TAG, "🔇 Noise Suppressor enabled")
+                } catch (e: Exception) {
+                    Log.w(TAG, "Failed to enable noise suppressor: ${e.message}")
+                }
             } else {
-                AudioManager.MODE_IN_COMMUNICATION
+                Log.d(TAG, "Noise Suppressor not available on this device")
             }
             
             audioRecord?.startRecording()
-            Log.d(TAG, "Started recording (handsfree=$useHandsfree, gain=$gainMultiplier)")
+            Log.d(TAG, "✅ Recording from BLUETOOTH SCO (gain=$gainMultiplier, NC=${noiseSuppressor?.enabled == true})")
             
             // Start reading audio data with gain amplification
             recordingJob = CoroutineScope(Dispatchers.IO).launch {
@@ -188,6 +201,10 @@ class BluetoothScoAudioCapture(private val context: Context) {
         
         recordingJob?.cancel()
         recordingJob = null
+        
+        // Release noise suppressor
+        noiseSuppressor?.release()
+        noiseSuppressor = null
         
         audioRecord?.stop()
         audioRecord?.release()
